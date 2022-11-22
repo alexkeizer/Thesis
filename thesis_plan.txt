@@ -1,0 +1,30 @@
+
+Thesis Plan Alex Keizer
+
+Supervised by Jasmin Blanchette (from VU's CS department) and Benno van den Berg I plan to work on a 
+datatype package for Lean 4, based on quotients of polynomial functors (QPFs).
+
+Prior literature has explored the theory of QPFs, and provided a formalization in Lean 3. [1]
+The goal of this project will be to provide a more high-level, user-friendly way to define (co)datatypes.
+A similar package was also developed for Isabelle/HOL, using the slightly different construct of BNFs. [2]
+
+Firstly, we will be working on porting the existing formalisation to Lean 4.
+
+Then, we plan to write a parser, enabling users to declare datatypes using intuitive recursive equations,
+rather than manually defining the underlying QPFs.
+
+Using this parser, I will explore example definitions of simple datatypes, such as lists and Rose trees.
+
+The final part will be to reduce user-friction.
+For example, by automatically synthesizing high-level induction principles, or to automatically recognize when
+a polymorphic datatype constitutes a QPF itself and to register it as such.
+
+
+The primary contribution of the project will be the implementation of Lean code, 
+rather than development of theory. 
+As such, most time will be spent in the research/implementation phase, 
+with roughly the final six weeks dedicated to writing up the thesis.
+
+
+[1] https://drops.dagstuhl.de/opus/volltexte/2019/11061/pdf/LIPIcs-ITP-2019-6.pdf
+[2] https://isabelle.in.tum.de/dist/doc/datatypes.pdf

@@ -1,0 +1,852 @@
+\documentclass[titlepage]{report}
+
+%
+%   PACKAGES   
+%
+
+\usepackage{illcmolthesis}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{unicode-math}
+\usepackage{verbatim}   % for the comment environment
+
+% 
+%   Minted
+% 
+
+\usepackage[outputdir=./out]{minted}
+
+% instruct minted to use our local theorem.py
+\newmintinline[lean]{lean4.py:Lean4Lexer -x}{bgcolor=white, fontsize=\small}
+\newminted[leancode]{lean4.py:Lean4Lexer -x}{fontsize=\small}
+
+% Disable the red boxed minted will put around "syntax errors" 
+\AtBeginEnvironment{minted}{%
+  \renewcommand{\fcolorbox}[4][]{#4}}
+
+
+
+
+%   
+%   Font
+% 
+
+\usepackage[utf8]{inputenc}
+\usepackage{newunicodechar}
+\usepackage{fontspec}
+
+% switch to a monospace font supporting more Unicode characters
+\setmonofont{JetBrains Mono NL Light}
+% \setmonofont{Droid Sans Mono}
+
+\newfontfamily{\freemono}{FreeMono}
+\newfontfamily{\droidmono}{Droid Sans Mono}
+\newfontfamily{\jbmono}{JetBrains Mono NL Light}
+
+\newunicodechar{→}{$\rightarrow$}
+\newunicodechar{⟹}{$\Longrightarrow$}
+
+\newunicodechar{α}{{\droidmono α}}
+\newunicodechar{β}{{\droidmono β}}
+\newunicodechar{γ}{{\droidmono γ}}
+
+% 
+% \usepackage[GreekAndCoptic]{ucharclasses}
+% \setTransitions{GreekAndCoptic}{}{}
+
+
+% 
+%   Spacing & Layout
+% 
+
+\usepackage{geometry}
+
+\geometry{
+    hmargin=10em
+}
+\frenchspacing
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+
+
+
+% 
+%   Custom environments
+% 
+
+% definitions
+\newenvironment{definition}[1][Definition:]{\begin{trivlist}                         
+    \item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+    
+% remark    
+\newenvironment{remark}[1][Remark:]{\begin{trivlist}                         
+    \item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+    
+
+% todo
+\newenvironment{todo}[1][Todo:]{\begin{trivlist}                         
+    \item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+% hidden code    
+\newenvironment{leanhidden}{\expandafter\comment}{\expandafter\endcomment}
+
+\begin{document}
+
+%
+%   TITLE PAGE
+%
+\title{TITLE OF THE THESIS}
+\author{Alex C.\,Keizer}
+\birthdate{October 15th, 1998}
+\birthplace{Alkmaar, The Netherlands}
+\defensedate{T.B.D, 2022}
+\supervisor{Dr Jasmin Blanchette}
+\supervisor{Dr Benno van der Berg}
+\committeemember{T.B.D.}
+% \committeemember{Prof Dr Jane Williams}
+% \committeemember{Dr Jill Jones}
+% \committeemember{Dr Albert Heijn}
+\maketitle
+
+
+\begin{leanhidden}
+    import Qpf.Macro
+
+    namespace Thesis
+\end{leanhidden}
+
+%
+%   TEXT
+%
+\chapter{Introduction}
+
+
+
+
+
+
+
+\chapter{Background}
+
+
+\begin{leanhidden}
+    namespace Formalizations
+\end{leanhidden}
+\chapter{Formalizations, revisited}
+In the preceding chapter we presented the formalization of QPFs as made by Avigad et al.
+In the process of porting the code from Lean3 to Lean4, 
+I identified, and indeed implemented, various potential improvements . 
+
+These chapter thus serves to elaborate on these changes to the existing behaviour which are too big
+to be considered just porting, yet, don't directly relate to the (co)datatype synthesis and metaprogramming
+part of the project (those will be covered in later chapters).
+
+
+
+
+\section{Functions \& Currying}
+Like most functional languages, in Lean it is idiomatic to write functions in their curried form, 
+so \lean{f : Type → Type → Type}, rather than \lean{f : (Type × Type) → Type}.
+
+However, in the formalization of QPF, we're working with functions of arbitrary arity $n$, and it 
+is difficult to express concepts such as ``the result of applying $n$ arguments to $f$'' while remaining
+general with respect to the value of $n$ when $f$ is curried.
+
+So instead, the formalizations work with the notion of an (uncurried) type function.
+
+%LEAN namespace Hidden -- hide definition, so it does not interfere
+\begin{leancode}
+    abbrev TypeFun (n : Nat)
+      := TypeVec n → Type v
+\end{leancode}
+%LEAN end Hidden
+
+Which is a function that takes a list of exactly $n$ types, and returns a type --- the \texttt{u} and
+\texttt{v} refer to the respective universes that these types live in, and betray a technical limitation
+of this encoding: all arguments to a \lean{TypeFun} must live in the same universe.
+
+There is an obvious translation from \lean{TypeFun} to a curried type function and, vice versa, from
+a function taking $n$ types from the same universe and returning a type, to a \lean{TypeFun n}.
+I have implemented these conversions as \lean{TypeFun.toCurried} and \lean{TypeFun.ofCurried}, respectively,
+and proven that these functions are isomorphisms. 
+
+To wit, they function as expected:
+\begin{leancode}
+    variable (F : TypeFun 2) (F' : Type 1 → Type 1 → Type 2)
+    example : F.curried α β = F ![α, β]                 := by rfl
+    example : F' α β = (TypeFun.ofCurried F') ![α, β]   := by rfl
+\end{leancode}
+
+We could write down the type of \texttt{F'} in the way we're used to writing function types, since
+we fixed a particular arity. 
+It becomes a bit trickier to name the type of curried functions of arbitrary arity.
+Thus, \lean{CurriedFun α β n} is a recursively defined alias for \lean{α → ... → α → β}, 
+taking $n$ arguments of type \texttt{α}.
+\begin{leancode}
+    abbrev CurriedFun (α : Type u) (β : Type v) : Nat → Type (max u v)
+      | 0   => PUnit.{u+1} → β
+      | 1   => α → β
+      | n+1 => α → CurriedFun α β n
+\end{leancode}
+Intuitively one might expect a \lean{CurriedFun} taking no arguments (so, $n = 0$) to be equal to 
+just \lean{β}, but that does not typecheck --- \lean{Type v} and \lean{Type (max u v)} are not, in general, the same type.
+One might be able to lift \texttt{β} into the right universe, but such functions are not particularly
+interesting anyways, so I opted for the simpler solution: functions that take no arguments are
+functions from the unit type.
+% \footnote{Well, \texttt{PUnit}, which is the universe polymorphic unit type}
+
+A curried type function is just an instance of \lean{CurriedFun}.
+\begin{leancode}
+    abbrev CurriedTypeFun := CurriedFun (Type u) (Type v)
+\end{leancode}
+
+
+
+Considering all this complexity, it is easy to see why Avigad et al made all the formalizations and
+constructions in terms of uncurried functions. 
+Still, uncurried functions feel very unidiomatic and users will rightfully expect their (co)datatypes
+to function as curried type functions. 
+It would be interesting to see whether it is possible to reformulate the formalization of QPFs in
+terms of curried functions. 
+For the time being, we'll satisfy ourselves with hiding these details throughs
+\lean{TypeFun.curried} and \lean{TypeFun.ofCurried} conversions.
+
+
+
+\section{MvQpf}
+The following change might feel overwhelmingly underwhelming, but it presents a considerably quality 
+of life improvement for the \lean{MvQpf} typeclass. Originally, the latter was defined as
+\begin{leancode}
+    class MvQpf {n : Nat} (F : TypeFun n) [MvFunctor F] where
+        -- ...
+\end{leancode}
+This makes sense, \texttt{F} can only be a QPF if it is a functor in the first place.
+However, when declared like this, the type of \lean{MvQpf} is 
+\begin{leancode}
+    #check (MvQpf : {n : Nat} → (F : TypeFun n) → [MvFunctor F] → Type _)
+\end{leancode}
+In particular, this means we cannot write \lean{MvQpf F}, unless an instance of \lean{MvFunctor F}
+can be inferred. For concrete QPFs this is generally not problematic, but when \texttt{F} is a
+variable, this restriction becomes annoying. 
+
+For example, 
+\begin{leancode}
+    variable (F : TypeFun n) [MvQpf F]
+\end{leancode}
+
+So before we can s
+
+
+
+\section{VecMvFunctor}
+
+The original formulation of 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\begin{leanhidden}
+    end Formalizations
+
+    namespace Procedure
+\end{leanhidden}
+
+
+
+
+\chapter{From Specification to Functor}
+
+This chapter will establish a procedure that transforms a specifications of a (co)datatype
+into the proper constructions on QPFs.
+It will do so in the abstract, focusing on the details of the procedure, rather than implementation
+details of the Lean meta-programming system (which will be covered in the next chapter).
+
+
+\section{Shape types}
+
+Arguably the simplest, and most fundamental, inductive types are \lean{Sum α β} and \lean{Prod α β},
+representing "either α or β" and "a pair of α and β", respectively.
+They can be defined as
+
+\begin{center}
+\begin{minipage}[t]{0.45\linewidth}
+    \begin{leancode}
+inductive Sum α β
+  | inl : α → Sum α β
+  | inr : β → Sum α β
+    \end{leancode}
+\end{minipage}
+\begin{minipage}[t]{0.45\linewidth}
+    \begin{leancode}    
+inductive Prod α β
+  | mk : α → β → Prod α β
+    \end{leancode}
+\end{minipage}
+\end{center}
+
+They are also examples of what we will call \emph{shape} types.
+\begin{definition}
+    A \emph{shape} type is an inductive type \lean{Foo α_1, ..., α_n}, 
+    where each constructor takes only arguments of types in $\{α_1, ..., α_n\}$.
+\end{definition}
+That is, each constructor's arguments must be typed as one of the parameters to the shape type.
+Let's make this a bit clearer by look at examples that are \textbf{not} shape types. 
+
+%LEAN namespace BadExample
+\begin{leancode}
+    inductive MyList α
+      | nil  : MyList α 
+      | cons : α → MyList α → MyList α
+
+    inductive ListWrapper α
+      | mk : List α → ListWrapper α
+
+    inductive NatWrapper
+      | mk : Nat → NatWrapper
+\end{leancode}
+%LEAN end BadExample
+
+The only parameter to \lean{MyList} is α, but the \lean{cons} constructor takes a \lean{MyList α} as second argument,
+so \lean{MyList} is not a shape type.
+Similarly, \lean{ListWrapper.mk} (resp. \lean{NatWrapper.mk}) takes an argument of type \lean{List α} (resp. \lean{Nat}),
+which are not type parameters, so these types are not shapes either.
+
+Notice that shape types are non-recursive and do not depend on any other types, as a direct consequence 
+of the definition. This makes them easy to translate into a polynomial functor. 
+
+\begin{remark}
+    One way to do this translation is to realize that all shape functors can be defined as a
+    composition of sums and products. 
+    This is similar to what the datatype package for Isabelle/HOL does.
+    We'll use a different, slightly more monolithic approach.
+\end{remark}
+
+Recall that polynomial functors are defined as
+\begin{leancode}
+    structure MvPFunctor (n : Nat) :=
+      (A : Type u) (B : A → TypeVec n)
+\end{leancode}
+
+
+Let us return to the example of sum and product types. 
+For the ``head'' type (\lean{A}), we will take a type that has exactly as many constructor as
+the shape type, but such that each constructor is a constant (i.e., takes no arguments).
+Note that the head type does not take any type parameters. 
+
+\begin{center}
+    \begin{minipage}[t]{0.45\linewidth}
+        \begin{leancode}
+    inductive Sum.HeadT
+      | inl : Sum.HeadT
+      | inr : Sum.HeadT
+        \end{leancode}
+    \end{minipage}
+    \begin{minipage}[t]{0.45\linewidth}
+        \begin{leancode}    
+    inductive Prod.HeadT
+      | mk : Prod.HeadT
+        \end{leancode}
+    \end{minipage}
+\end{center}
+
+The ``child'' family of types maps each constructor $c$ to a vector of types \lean{α_c}.
+What is most important is the cardinality of each type \lean{α_c i}, 
+because that is what determines the number of arguments of the $i$-th type parameter are needed
+to use constructor $c$. 
+
+The concrete structure of these types is not relevant, so we'll always use \lean{PFin2 m}, the type
+of natural numbers less than $m$, to construct a type with cardinality $m$.
+
+\begin{remark}
+    Note that \lean{PFin2 m} is a type we defined ourselves. We prefer it over \lean{Fin m}, a similar
+    type defined by the lean standard library, because our version is \emph{universe polymorphic}.
+    We will come back later to what this means and why it is important.
+\end{remark}
+
+So, we start by counting for each constructor, how many times it takes an argument of type \lean{α_i},
+for each parameter \lean{α_i}.
+\begin{center}
+\begin{tabular}{l|c|c}
+    & α & β \\ \hline
+    \texttt{Sum.inl}  & 1 & 0 \\
+    \texttt{Sum.inr}  & 0 & 1 \\
+    \texttt{Prod.mk}  & 1 & 1 \\    
+\end{tabular}    
+\end{center}
+
+Using these counts, we define the child family of types, and subsequently, the polynomial functor.
+
+\begin{center}
+  \begin{leancode}
+    def Sum.ChildT : Sum.HeadT → TypeVec 2
+      | .inl => $[PFin2 1, PFin2 0]
+      | .inr => $[PFin2 0, PFin2 1]
+
+    def Prod.ChildT : Prod.HeadT → TypeVec 2
+      | .mk  => $[PFin2 1, PFin2 1]
+  \end{leancode}
+\end{center}
+
+\begin{remark}
+    If the interpreter knowns which type to expect, say \texttt{Sum.HeadT}, and we write an identifier with a leading
+    dot, like \texttt{.inl}, then it will automatically add the type as namespace, concluding that
+    we must mean \texttt{Sum.HeadT.inl}.
+\end{remark}
+From here on, the construction is the same for both types;
+We'll show it just for \texttt{Sum}.
+\begin{center}
+    \begin{leancode}
+    def Sum.P  : MvPFunctor 2 := MvPFunctor.mk Sum.HeadT  Sum.ChildT
+
+    
+    def QpfSum.Internal : TypeFun 2  := Sum.P.Obj
+    def QpfSum  : Type → Type → Type := TypeFun.curried QpfSum.Internal
+
+    -- instance : MvQpf 
+  \end{leancode}
+\end{center}
+
+
+
+\begin{todo}
+    Show that QpfSum.Internal has an instance of MvQpf
+\end{todo}
+
+And we're done! However, these qpf-based versions of the types are still not very nice to use.
+For example, if we want to construct a pair in \lean{QpfProd}, we have to go through \lean{MvPFunctor.mk},
+which encodes its arguments in a not user-friendly way. 
+Namely, to construct \texttt{Sum α β} from an \texttt{(a : α)}, i.e., use the \texttt{inl} constructor, 
+it expects something of type
+\begin{center}
+    \lean{(Sum.ChildT .inl) ⟹ ![α, β]}
+\end{center}
+Which is shorthand for, 
+\begin{center}
+    (i : PFin 2) → (\lean{![PFin2 1, PFin 0] i → ![α, β] i})
+\end{center}
+That is, a function \lean{PFin2 1 → α} and a function \lean{PFin2 0 → β}.
+The latter is trivial, since \lean{PFin2 0} is uninhabited, and the former we can construct from \texttt{a}.
+
+\begin{leancode}
+    def QpfSum.inl {α β} (a : α) : QpfSum α β :=
+      MvPFunctor.mk .inl (fun (i : PFin 2) => match i with
+        | 1 => fun (j : PFin2 1) => a
+        -- `PFin2 0' is uninhabited, use the trivial eliminator `PFin2.elim0'
+        | 0 => fun (j : PFin2 0) => PFin2.elim0 j
+      )
+\end{leancode}
+\begin{remark}
+    Note that vectors are indexed right-to-left, so \texttt{![α, β]} is β
+    and \texttt{![α, β] 1} is α
+\end{remark}
+
+We could generate these constructors automatically, but the inner details will still be exposed
+when a user tries to destruct an element of \texttt{QpfSum α β}.
+Clearly, this is not an ideal definition.
+
+\subsection{MvQpf.ofPolynomial}
+The solution is to not reinvent the wheel quite as much.
+The \lean{inductive} version of \texttt{Sum} and \texttt{Prod} (and, indeed any shape type) works
+perfectly fine, and is much easier to work with than the polynomial functor-based version.
+
+In fact, the goal of this part of the procedure is not to redefine shape types, it is to show that
+they are QPFs by deriving an instance of \texttt{MvQpf} (for the uncurried version).
+The way to do this is \texttt{MvQpf.ofPolynomial}.
+
+%LEANIGNORE
+\begin{leancode}
+    def ofPolynomial {F : TypeFun n} 
+                     (P : MvPFunctor n) 
+                     (box    : ∀{α}, F α → P.Obj α) 
+                     (unbox  : ∀{α}, P.Obj α → F α) 
+                     (box_unbox_id : ∀{α} (x : P.Obj α), box (unbox x) = x)
+                     (unbox_box_id : ∀{α} (x : F α), unbox (box x) = x)
+                  : MvQpf F
+        := _ -- body omitted
+\end{leancode}
+
+If we can provide an isomorphism between \texttt{TypeFun.ofCurried Sum} and the polynomial functor \texttt{Sum.P}, 
+then \texttt{ofPolynomial} shows that the former is a QPF.
+
+\begin{todo}
+    Maybe explain how box, unbox, etc. are generated?
+\end{todo}
+
+
+
+
+
+
+\section{Recursive and corecursive types}
+Now we know how to turn any shape type into a qpf-based datatype.
+If a type is recursive, but otherwise does not mention other types, we can transform it into a shape
+type.
+Namely, by adding an extra variable and substituting it for all (co)recursive occurences of the type
+to be defined.
+
+For example, the shape of \texttt{MyList α}, defined at the start of the previous section, is
+\begin{leancode}
+    inductive List.Shape α ρ
+      | nil  : Shape α ρ
+      | cons : α → ρ → Shape α ρ
+\end{leancode}
+This is a valid shape type, so we follow the procedure above to derive an instance of \texttt{MvQpf}.
+To get rid of the extra variable \texttt{ρ}, we simply take the fixpoint.
+\begin{leancode}
+    def QpfList.Internal : TypeFun 2 
+        := MvQpf.Fix (TypeFun.ofCurried MyList.Shape)
+
+\end{leancode}
+
+\begin{todo}
+    Explain cofixpoint
+\end{todo}
+
+
+
+\section{Composition pipeline}
+Finally, we are ready to discuss (co)datatypes that are composed of other (co)datatypes.
+
+The running example for this section will be the rose tree; leaves are labelled with \texttt{α}, while
+internal nodes are labelled with \texttt{β} and can have an finite, non-zero number of children.
+\begin{leancode}
+    data QpfTree α β
+      | leaf : α → QpfTree α β
+      | node : β → QpfTree α β → QpfList (QpfTree α β) → QpfTree α β
+\end{leancode}
+
+The type is recursive, so we introduce the fresh parameter as before.
+\begin{leancode}
+    data QpfTree.Nonrecursive α β ρ
+      | leaf : α → QpfTree α β ρ
+      | node : β → ρ → QpfList ρ → QpfTree α β ρ
+\end{leancode}
+
+Then, we go through each argument type which is not just a parameter, and substitute
+it with a fresh parameter.
+
+\begin{leancode}
+    data QpfTree.Shape α β ρ σ₁
+      | leaf : α → QpfTree α β ρ σ₁
+      | node : β → ρ → σ₁ → QpfTree α β ρ σ₁
+\end{leancode}
+Remembering that \texttt{σ₁} stands for \texttt{QpfList ρ}, so we should define the following 
+composition, in such a way that \texttt{F} is a QPF.
+%LEANIGNORE
+\begin{leancode}
+    def F α β ρ := QpfTree.Shape α β ρ (QpfList ρ)
+\end{leancode}
+
+
+\subsection{Parameter reuse}
+Of course, multiple occurences of the same non-parameter type don't nead a fresh variable each.
+Suppose we had a constructor that takes two list, like
+%LEANIGNORE
+\begin{leancode}
+    | node₂ : β → ρ → QpfList ρ → QpfList ρ → QpfTree α β ρ
+\end{leancode}
+Then we can reuse the same fresh parameter \texttt{σ₁} for both occurences.
+%LEANIGNORE
+\begin{leancode}
+    | node₂ : β → ρ → σ₁ → σ₁ → QpfTree α β ρ σ₁
+\end{leancode}
+
+On the other hand, if a non-parameter type also occurs as a subexpression of another type, then
+we will not substitute it with the same parameter.
+The example gets a bit contrived, but suppose nodes take both a list of children, and a nested list 
+of lists of children.
+%LEANIGNORE
+\begin{leancode}
+    | node₃ : β → ρ → QpfList ρ → QpfList (QpfList ρ) → QpfTree α β ρ
+\end{leancode}
+Then we can reuse the same fresh parameter \texttt{σ₁} for both occurences.
+%LEANIGNORE
+\begin{leancode}
+    | node₃ : β → ρ → σ₁ → σ₂ → QpfTree α β ρ σ₁ σ₂
+\end{leancode}
+Where \texttt{σ₁} stands for \texttt{QpfList ρ}, as before, and \texttt{σ₂} stands for 
+\texttt{QpfList (QpfList ρ)}.
+
+\begin{todo}
+    Bring attention back to the initial example
+\end{todo}
+
+
+\subsection{Solving for compositions}
+
+The question remains, how do we show that \texttt{F} is a QPF.
+Recall the desired definition is
+%LEANIGNORE
+\begin{leancode}
+    def F α β ρ := QpfTree.Shape α β ρ (QpfList ρ)
+\end{leancode}
+
+Well, it is a composition, so we look at 
+
+\begin{todo}
+    Explain solving for compositions
+    - MvQpf.Comp
+    - then a family of functors Gi with constraints
+    - Projections
+    - Constants
+\end{todo}
+
+
+
+
+\section{Universe considerations}
+\begin{todo}
+    Explain universe polymorphism (i.e., why PFin2).
+
+    Explain why HeadT is not universe polymorphic yet (bug in our version of lean)
+\end{todo}
+
+
+\section{A final example}
+\begin{todo}
+    Do the entire procedure for
+    codata NatStream
+    | mk : Nat → NatStream → NatStream
+\end{todo}
+
+
+
+
+\newpage 
+\newpage
+
+
+
+
+
+
+
+
+We will start by giving example specifications, and showing how to represent each as a (co)fixpoint
+of a QPF manually.
+
+The \lean{inductive} keyword encompasses three concepts: sums, products, and recursion.
+Let's forget about the latter for a second, and look at a non-recursive type
+\begin{leancode}
+    inductive Foo (α β γ : Type)
+    | bar : α → β → Foo α β γ
+    | qux : γ → Foo α β γ
+\end{leancode}
+We can replace the two arguments of the \lean{bar} constructor by their product.
+\begin{leancode}
+    inductive Foo₂ (α β γ : Type)
+    | bar : (α × β) → Foo₂ α β γ
+    | qux : γ → Foo₂ α β γ
+\end{leancode}
+Having two constructor with a single argument just means taking their sum.
+\begin{leancode}
+    def Foo₃ (α β γ : Type) :=
+        (α × β) ⊕ β
+\end{leancode}
+
+
+
+
+\section{Polynomial Functors}
+
+Recall that we formalized polynomial functors, and their action on types, as  
+\begin{leancode}
+    structure MvPFunctor (n : Nat) :=
+        (A : Type u) (B : A → TypeVec.{u} n)
+
+    def MvPFunctor.Obj (P : MvPFunctor n) : TypeFun n
+        := fun α => Σ a : P.A, P.B a ⟹ α
+\end{leancode}
+
+That is, a polynomial functor $P$ is defined by some type $A$, where each element represents some 
+constructor of type $P(x_0, ..., x_{n-1})$, and a family of types $B_{a, i}$, with $a ∈ A$ and $i < n$, 
+where each element of $B_{a,i}$ is a label for an argument of type $x_i$ needed by constructor $a$.
+
+These can of course be any type, and this flexibility is useful in certain constructions,
+but ultimately the functor is defined by their \emph{cardinality}, i.e., how many inhabitants types 
+$A$ and $B_{a,i}$ have. Any additional structure of these types is not relevant for the behaviour of 
+the functor.
+
+Consequently, we can express any polynomial functor (up to isomorphism, at least) with the following
+shorthand.
+
+\begin{leancode}
+    def MvPFunctor.mk' {n : Nat} (ctors : List (Vec Nat n)) 
+        : MvPFunctor n
+    :=  let A := PFin2 ctors.length
+        let B := fun a i => PFin2 (ctors.get a.toFin i)
+        ⟨A, B⟩
+\end{leancode}
+
+Here \lean{PFin2 n} is the type of natural numbers strictly less than $n$, which gives us an easy
+way to construct types of arbitrary (but finite) cardinality $n$.
+
+In effect, \lean{ctors} is a matrix of fixed width $n$ (but arbitrary height). 
+Each row represents a constructor, the value in the $i$-th column tells us how many elements of the 
+$i$-th type argument are required in the constructor.
+
+\subsubsection*{Products \& Sums}
+For example, consider a (binary) product, which could be inductively defined as 
+\begin{leancode}
+    inductive Prod α β
+      | mk : α → U → Prod T U
+\end{leancode}
+
+We can define the corresponding functor, using our abbreviation as
+\begin{leancode}
+    def Prod.P : MvPFunctor 2 
+      := .mk' [
+        ![1, 1]
+      ]
+\end{leancode}
+At a glance, we see that \lean{P ![α, β]} has a single constructor, and this constructor takes one
+argument of type \lean{α} and one argument of \lean{β}.
+This definition corresponds to the following
+\begin{leancode}
+    def Prod.P' : MvPFunctor 2 
+      :=  let A := PFin2 1
+          let B := fun _ => ![PFin2 1, PFin2 1]
+          ⟨A, B⟩
+\end{leancode}
+
+
+
+Another fundamental functor is the (binary) sum. Inductively, it looks like this
+\begin{leancode}
+    inductive Sum α β 
+      | inl : α → Sum α β 
+      | inl : β → Sum α β 
+\end{leancode}
+It has two constructors, so we use a matrix with two rows to define the polynomial functor.
+\begin{leancode}
+    def Sum.P : MvPFunctor
+\end{leancode}
+
+
+
+
+\subsection*{Universe polymorphism}
+
+As an aside, Lean does provide a standard \lean{Fin n} type which encodes naturals less than $n$.
+However, \lean{Fin n} has type \lean{Type}, which forces the arguments to any functor \lean{P} with
+\lean{P.A = Fin n} to be in \lean{Type 0} as well.
+
+To illustrate, here is a definition of the product functor, but now in terms of \lean{Fin}
+\begin{leancode}
+    def Prod.Q : MvPFunctor 2 
+      :=  let A := Fin 1
+          let B := fun _ => ![Fin 1, Fin 1]
+          ⟨A, B⟩
+
+    -- `Nat` lives in `Type', so both functors are fine
+    #check  
+\end{leancode}
+First, consider the pair \lean{(Nat, Nat)}. \lean{Nat} lives in \lean{Type}, so both functors are 
+fine
+\begin{leancode}
+    #check (P.Obj ![Nat, Nat] : Type)       -- ✓
+    #check (Q.Obj ![Nat, Nat] : Type)       -- ✓
+\end{leancode}
+Then, suppose some \lean{X} that lives in a higher universe.
+\lean{P} is able to adjust. 
+\begin{leancode}
+    variable (X : Type 1)
+    #check (P.Obj ![X, X] : Type 1)         -- ✓
+\end{leancode}
+However, \lean{Q} complains that it expects \lean{X} to live in \lean{Type}.
+\begin{leancode}    
+    #check Q.Obj ![X, X]                    -- ×            
+    -- application type mismatch
+    --   Vec.append1 Vec.nil X
+    -- argument
+    --   X
+    -- has type
+    --   Type 1 : Type 2
+    -- but is expected to have type
+    --   Type : Type 1
+\end{leancode}
+
+Note that \lean{P} still requires all arguments to live in the same universe, so
+\begin{leancode}
+    #check P.Obj ![X, Nat]                  -- ×
+\end{leancode}
+%     -- application type mismatch
+%     --   Vec.append1 (Vec.append1 Vec.nil ℕ) X
+%     -- argument
+%     --   X
+%     -- has type
+%     --   Type 1 : Type 2
+%     -- but is expected to have type
+%     --   Type : Type 1
+% \end{leancode}
+does not typecheck.
+
+
+
+\subsection*{Sum}
+For example, the type \lean{Sum T U}, representing the disjoint union of types \lean{T} and \lean{U},
+is a polynomial functor. It could be specified as:
+\begin{leancode}
+    data Sum T U
+    | inl : T → Sum T U
+    | inr : U → Sum T U
+\end{leancode}
+For $A$, we take a simple enumeration of the constructors
+\begin{leancode}
+    inductive Sum.A
+    | inl : Sum.A
+    | inr : Sum.A
+\end{leancode}
+For $B$, we use the following
+\begin{leancode}
+    def Sum.B : Sum.A → TypeVec n
+    | .inl => ![Unit, Empty]
+    | .inr => ![Empty, Unit]
+\end{leancode}
+This means that an element of \lean{Sum T U} made with constructor \lean{inl} contains one inhabitant of \lean{T} (\lean{Unit} has exactly one inhabitant) and no inhabitants of \lean{U} (as the name implies, \lean{Empty} is not inhabited). Conversely, elements made with constructor \lean{inr} contain one inhabitant of \lean{U} and no inhabitant of \lean{T}.
+
+
+
+
+
+
+
+
+
+
+
+\chapter{Porting}
+\label{ch:porting}
+
+
+
+
+
+
+
+
+
+\begin{leanhidden}
+    end Thesis
+\end{leanhidden}
+\end{document}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "test"
+%%% End: 
