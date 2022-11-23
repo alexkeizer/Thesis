@@ -9,6 +9,7 @@
 \usepackage{amssymb}
 \usepackage{unicode-math}
 \usepackage{verbatim}   % for the comment environment
+\usepackage{hyperref}
 
 % 
 %   Minted
@@ -90,6 +91,15 @@
 % hidden code    
 \newenvironment{leanhidden}{\expandafter\comment}{\expandafter\endcomment}
 
+
+
+% 
+%   Custom commands
+% 
+\newcommand\inductive{\lean{inductive}}
+\newcommand\data{\lean{data}}
+\newcommand\codata{\lean{codata}}
+
 \begin{document}
 
 %
@@ -121,6 +131,128 @@
 \chapter{Introduction}
 \label{ch:intro}
 
+Much of logic is built on a framework of induction.
+It is no surprise, then, that Lean -- an interactive theorem prover / dependently typed, functional programming
+language -- is based on induction as well.
+Specifically, the calculus of constructions with inductive definitions.
+
+To define a new type, users will generally employ the \inductive keyword, which has a syntax similar
+to other functional languages, like Haskell.
+
+\begin{leancode}
+    inductive List α 
+    | nil  : List α
+    | cons : α → List α → List α
+\end{leancode}
+
+Read as follows: \texttt{List} has two \emph{constructors}, i.e., ways to construct a list.
+\texttt{List.nil} is a constant
+representing the empty list; 
+\texttt{List.cons head tail}, where \texttt{head} is of type \texttt{α} and \texttt{tail} is another list of \texttt{α}s, representing the operation of adding a new element to the front of
+an existing list.
+
+The \texttt{α} is a type parameter, meaning we are generic over the type of elements in a list;
+\texttt{List Nat} is a list of natural numbers, while \texttt{List String} is a list of strings.
+
+So, \inductive encompasses three notions: 
+\begin{itemize}
+    \item Sums/disjoint unions (by having multiple constructors)
+    \item Products (by having a constructor take multiple arguments)
+    \item Recursion/induction
+\end{itemize}
+
+The inductive interpretation means that every element of an inductive type consists of only
+finitely many applications of its constructors. In particular, it is not possible
+to construct a list with an infinite chain of \text{cons} applications
+%LEANIGNORE
+\begin{center}
+    \texttt{cons 0 (cons 1 (cons 2 (cons 3 (cons 4 ( cons 5 ... )))))}
+\end{center}
+The recursion must end in \texttt{nil} at some point, \texttt{List} represent only finite lists.
+\footnote{Contrast this with Haskell, which does allow for infinite lists with a similar definition, due to its lazy semantics}
+
+
+Now, the case of infinite lists (also called streams) has a simple enough encoding in Lean, as a function from natural numbers to the parameter type.
+\begin{leancode}
+    def Stream α := Nat → α
+\end{leancode}
+
+If, instead, we want to allow for both finite and infinite lists, we can take the sum of these types.
+\begin{leancode}
+    inductive InfOrFinList α
+    | inf : Stream α
+    | fin : List α 
+\end{leancode}
+
+And like this we can come quite far with ad-hoc encodings. 
+However, Lean lacks a comprehensive solution to defining infinite data structures.
+Ideally, there would be a way for users to write a specification with the same syntax as
+\inductive, but have it be interpreted \emph{coinductively} instead.
+
+\begin{todo}
+    Insert reference to avigad
+\end{todo}
+I have implemented a \codata macro in Lean 4 to do exactly this.
+For example, the following is automatically compiled into a type that is equivalent to \texttt{InfOrFinList}
+
+\begin{leancode}
+    codata CoList α 
+    | nil  : CoList α
+    | cons : α → CoList α → CoList α
+\end{leancode}
+
+It is \emph{compositional}, allowing us to use \texttt{CoList} in the definition of subsequent types,
+either inductive or coinductive.
+
+However, \codata types are built on a foundation of QPFs (Quotients of Polynomial Functors, we will explain these later), and only compose well with types that are themselves QPFs. 
+The \codata macro will recognize when the newly defined type is a QPF (again, we will explain later under which conditions this is true), and automatically register it as such.
+
+One could manually prove that an \inductive type is a QPF, and it will compose without problems, but
+we also provide a \data to define inductive types using a similar procedure as \codata.
+Types defined as \data that fit the criteria of QPFs, are thus automatically registered as well.
+
+To wit, the following defines a tree of finite depth (because of the inductive interpretation of \data), but whose nodes have potentially infinitely many children (because they are stored in a \texttt{CoList}).
+
+\begin{leancode}
+    data RoseTree α
+    | node : α → CoList (RoseTree α) → RoseTree α
+\end{leancode}
+
+If we actually wanted trees of infinite depth, but where node have finitely many children, we can easily define that as well.
+\begin{leancode}
+    data List' α -- equivalent to List, but using data
+    | nil  : List' α
+    | cons : α → List' α
+
+    codata RoseTree2 α β
+    | node : α → List' (RoseTree α) → RoseTree α
+\end{leancode}
+
+\begin{todo}
+    References
+\end{todo}
+The work was inspired by an effort to add a (co)datatype package to Isabelle/HOL, 
+and greatly based on work by Avigad et al that established how coinductive types can be encoded
+(namely, through QPFs, or Quotients of Polynomial Functors) and provided formalizations of the relevant constructions -- albeit in Lean 3, while we are using Lean 4.
+
+The main contribution of this work is thus to port those formalization to Lean 4,
+to establish a procedure for translating specifications using the \inductive syntax into the
+appropriate constructions on QPFs, and to provide a proof of concept implementation of the \data and \codata macros.
+
+Chapter \ref{ch:background} will explain what QPFs are;
+chapter \ref{ch:porting} will detail the process of porting the QPF formalizations from Lean 3 to Lean 4;
+chapter \ref{ch:enhancing} will describe the enhancements we made to thsee formalizations, which go beyond just porting;
+chapter \ref{ch:procedure} will establish the translation procedure used by \data and \codata;
+chapter \ref{ch:implementing} will go into more technical detail about the (proof of concept)
+implementation of these macros, and the Lean 4 meta-programming system;
+finally, chapter \ref{ch:conclusion} will show the limitations of the current implementation, discuss potential improvements, and conclude the thesis.
+
+The code for the implementation can be found at \url{https://github.com/alexkeizer/qpf4}
+
+
+
+
+
 
 
 
@@ -129,6 +261,13 @@
 \chapter{Background}
 \label{ch:background}
 
+\begin{todo}
+    It is important to clarify that we're only considering inductive \emph{types}, 
+for which the recursive occurrences of the type being declared must not use other values for the 
+parameters.
+
+Suppose, for example 
+\end{todo}
 
 
 
@@ -139,10 +278,25 @@
 
 
 
-\begin{leanhidden}
-    namespace Formalizations
-\end{leanhidden}
-\chapter{Formalizations, revisited}
+
+
+
+
+\chapter{Porting the QPF formalization from Lean3 to Lean4}
+\label{ch:porting}
+
+
+
+
+
+
+
+
+%LEAN namespace Enhancing
+\chapter{Enhancing the QPF formalization}
+\label{ch:enhancing}
+
+
 In the preceding chapter we presented the formalization of QPFs as made by Avigad et al.
 In the process of porting the code from Lean3 to Lean4, 
 I identified, and indeed implemented, various potential improvements . 
@@ -258,28 +412,8 @@ The original formulation of
 
 
 
-
-
-\chapter{Porting QPF formalization from Lean3 to Lean4}
-\label{ch:porting}
-
-
-
-
-\chapter{Enhancing the QPF formalization}
-\label{ch:enhancing}
-
-
-
-
-
-
-
-
-
-
 \begin{leanhidden}
-    end Formalizations
+    end Enhancing
 
     namespace Procedure
 \end{leanhidden}
