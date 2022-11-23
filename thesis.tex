@@ -231,9 +231,9 @@ If we actually wanted trees of infinite depth, but where node have finitely many
 \begin{todo}
     References
 \end{todo}
-The work was inspired by an effort to add a (co)datatype package to Isabelle/HOL, 
-and greatly based on work by Avigad et al that established how coinductive types can be encoded
-(namely, through QPFs, or Quotients of Polynomial Functors) and provided formalizations of the relevant constructions -- albeit in Lean 3, while we are using Lean 4.
+The work was partly inspired by a similar effort to add (co)datatypes to Isabelle/HOL (another interactive theorem prover), 
+and greatly based on work by Avigad et al that established how coinductive types can be encoded in Lean
+(namely, through QPFs, or Quotients of Polynomial Functors) and provided formalizations of the relevant constructions -- albeit in Lean 3, while we are using Lean 4. \cite{avigadDataTypesQuotients2019a}
 
 The main contribution of this work is thus to port those formalization to Lean 4,
 to establish a procedure for translating specifications using the \inductive syntax into the
@@ -1036,6 +1036,12 @@ This means that an element of \lean{Sum T U} made with constructor \lean{inl} co
 \begin{leanhidden}
     end Thesis
 \end{leanhidden}
+
+
+
+\bibliographystyle{ieeetr}
+\bibliography{MScThesis}
+
 \end{document}
 
 
