@@ -1,0 +1,85 @@
+@article{avigadDataTypesQuotients2019a,
+  title = {Data {{Types}} as {{Quotients}} of {{Polynomial Functors}}},
+  author = {Avigad, Jeremy and Carneiro, Mario and Hudon, Simon},
+  date = {2019},
+  pages = {19 pages},
+  publisher = {{Schloss Dagstuhl - Leibniz-Zentrum fuer Informatik GmbH, Wadern/Saarbruecken, Germany}},
+  doi = {10.4230/LIPICS.ITP.2019.6},
+  url = {http://drops.dagstuhl.de/opus/volltexte/2019/11061/},
+  urldate = {2022-11-23},
+  abstract = {A broad class of data types, including arbitrary nestings of inductive types, coinductive types, and quotients, can be represented as quotients of polynomial functors. This provides perspicuous ways of constructing them and reasoning about them in an interactive theorem prover.},
+  editora = {Wagner, Michael},
+  editoratype = {collaborator},
+  langid = {english},
+  version = {1.0},
+  keywords = {000 Computer science; knowledge; general works,Computer Science},
+  file = {/home/alex/Zotero/storage/QYJXL9SD/Avigad et al. - 2019 - Data Types as Quotients of Polynomial Functors.pdf;/home/alex/Zotero/storage/Q2N47BF6/11061.html}
+}
+
+@article{biendarraDefiningCoDatatypes,
+  title = {Defining ({{Co}})Datatypes and {{Primitively}} ({{Co}})Recursive {{Functions}} in {{Isabelle}}/{{HOL}}},
+  author = {Biendarra, Julian and Blanchette, Jasmin and Desharnais, Martin and Panny, Lorenz and Popescu, Andrei and Traytel, Dmitriy},
+  pages = {64},
+  abstract = {This tutorial describes the definitional package for datatypes and codatatypes, and for primitively recursive and corecursive functions, in Isabelle/HOL. The following commands are provided: datatype, datatype\_compat, primrec, codatatype, primcorec, primcorecursive, bnf, lift\_bnf, copy\_bnf, bnf\_axiomatization, print\_bnfs, and free\_constructors.},
+  langid = {english},
+  keywords = {_tablet},
+  file = {/home/alex/Zotero/storage/M7SHIHPQ/Biendarra et al_Deﬁning (Co)datatypes and Primitively (Co)recursive Functions in Isabelle-HOL.pdf}
+}
+
+@article{furerQuotientsBoundedNatural2022,
+  title = {Quotients of {{Bounded Natural Functors}}},
+  author = {Fürer, Basil and Lochbihler, Andreas and Schneider, Joshua and Traytel, Dmitriy},
+  date = {2022-02-01},
+  journaltitle = {Logical Methods in Computer Science},
+  volume = {Volume 18, Issue 1},
+  eprint = {2104.05348},
+  eprinttype = {arxiv},
+  primaryclass = {cs},
+  pages = {7354},
+  issn = {1860-5974},
+  doi = {10.46298/lmcs-18(1:23)2022},
+  url = {http://arxiv.org/abs/2104.05348},
+  urldate = {2022-10-30},
+  abstract = {The functorial structure of type constructors is the foundation for many definition and proof principles in higher-order logic (HOL). For example, inductive and coinductive datatypes can be built modularly from bounded natural functors (BNFs), a class of well-behaved type constructors. Composition, fixpoints, and—under certain conditions—subtypes are known to preserve the BNF structure. In this article, we tackle the preservation question for quotients, the last important principle for introducing new types in HOL. We identify sufficient conditions under which a quotient inherits the BNF structure from its underlying type. Surprisingly, lifting the structure in the obvious manner fails for some quotients, a problem that also affects the quotients of polynomial functors used in the Lean proof assistant. We provide a strictly more general lifting scheme that supports such problematic quotients. We extend the Isabelle/HOL proof assistant with a command that automates the registration of a quotient type as a BNF, reducing the proof burden on the user from the full set of BNF axioms to our inheritance conditions. We demonstrate the command’s usefulness through several case studies.},
+  archiveprefix = {arXiv},
+  langid = {english},
+  keywords = {_tablet,Computer Science - Logic in Computer Science,Computer Science - Programming Languages},
+  file = {/home/alex/Zotero/storage/NHZZBL8R/Fürer et al_2022_Quotients of Bounded Natural Functors.pdf}
+}
+
+@article{paulinoMetaprogrammingLean,
+  title = {Metaprogramming in {{Lean}} 4},
+  author = {Paulino, Arthur and Testa, Damiano and Ayers, Edward and Böving, Henrik and Limperg, Jannis and Gadgil, Siddhartha and Bhat, Siddharth},
+  pages = {82},
+  langid = {english},
+  keywords = {_tablet},
+  file = {/home/alex/Zotero/storage/STURDSJ9/Paulino et al_Metaprogramming in Lean 4.pdf}
+}
+
+@article{traytelCategoryTheoryBased,
+  title = {A Category Theory Based (Co)Datatype Package for {{Isabelle}}/{{HOL}}},
+  author = {Traytel, Dmytro},
+  pages = {58},
+  langid = {english},
+  file = {/home/alex/Zotero/storage/AQIK6MRC/Traytel - A category theory based (co)datatype package for I}
+}
+
+@misc{ullrichNotationsHygienicMacro2022,
+  title = {Beyond {{Notations}}: {{Hygienic Macro Expansion}} for {{Theorem Proving Languages}}},
+  shorttitle = {Beyond {{Notations}}},
+  author = {Ullrich, Sebastian and de Moura, Leonardo},
+  options = {useprefix=true},
+  date = {2022-04-12},
+  number = {arXiv:2001.10490},
+  eprint = {2001.10490},
+  eprinttype = {arxiv},
+  primaryclass = {cs},
+  publisher = {{arXiv}},
+  url = {http://arxiv.org/abs/2001.10490},
+  urldate = {2022-10-30},
+  abstract = {In interactive theorem provers (ITPs), extensible syntax is not only crucial to lower the cognitive burden of manipulating complex mathematical objects, but plays a critical role in developing reusable abstractions in libraries. Most ITPs support such extensions in the form of restrictive “syntax sugar” substitutions and other ad hoc mechanisms, which are too rudimentary to support many desirable abstractions. As a result, libraries are littered with unnecessary redundancy. Tactic languages in these systems are plagued by a seemingly unrelated issue: accidental name capture, which often produces unexpected and counterintuitive behavior. We take ideas from the Scheme family of programming languages and solve these two problems simultaneously by proposing a novel hygienic macro system custom-built for ITPs. We further describe how our approach can be extended to cover type-directed macro expansion resulting in a single, uniform system offering multiple abstraction levels that range from supporting simplest syntax sugars to elaboration of formerly baked-in syntax. We have implemented our new macro system and integrated it into the new version of the Lean theorem prover, Lean 4. Despite its expressivity, the macro system is simple enough that it can easily be integrated into other systems.},
+  archiveprefix = {arXiv},
+  langid = {english},
+  keywords = {_tablet,Computer Science - Programming Languages},
+  file = {/home/alex/Zotero/storage/VQABD6ES/Ullrich_de Moura_2022_Beyond Notations.pdf}
+}

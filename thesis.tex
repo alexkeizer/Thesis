@@ -547,11 +547,11 @@ Using these counts, we define the child family of types, and subsequently, the p
 \begin{center}
   \begin{leancode}
     def Sum.ChildT : Sum.HeadT → TypeVec 2
-      | .inl => $[PFin2 1, PFin2 0]
-      | .inr => $[PFin2 0, PFin2 1]
+      | .inl => ![PFin2 1, PFin2 0]
+      | .inr => ![PFin2 0, PFin2 1]
 
     def Prod.ChildT : Prod.HeadT → TypeVec 2
-      | .mk  => $[PFin2 1, PFin2 1]
+      | .mk  => ![PFin2 1, PFin2 1]
   \end{leancode}
 \end{center}
 
@@ -567,8 +567,8 @@ We'll show it just for \texttt{Sum}.
     def Sum.P  : MvPFunctor 2 := MvPFunctor.mk Sum.HeadT  Sum.ChildT
 
     
-    def QpfSum.Internal : TypeFun 2  := Sum.P.Obj
-    def QpfSum  : Type → Type → Type := TypeFun.curried QpfSum.Internal
+    def QpfSum.Internal : TypeFun 2  := MvPFunctor.Obj Sum.P
+    def QpfSum : Type → Type → Type := TypeFun.curried QpfSum.Internal
 
     -- instance : MvQpf 
   \end{leancode}
@@ -593,20 +593,22 @@ Which is shorthand for,
     (i : PFin 2) → (\lean{![PFin2 1, PFin 0] i → ![α, β] i})
 \end{center}
 That is, a function \lean{PFin2 1 → α} and a function \lean{PFin2 0 → β}.
-The latter is trivial, since \lean{PFin2 0} is uninhabited, and the former we can construct from \texttt{a}.
-
-\begin{leancode}
-    def QpfSum.inl {α β} (a : α) : QpfSum α β :=
-      MvPFunctor.mk .inl (fun (i : PFin 2) => match i with
-        | 1 => fun (j : PFin2 1) => a
-        -- `PFin2 0' is uninhabited, use the trivial eliminator `PFin2.elim0'
-        | 0 => fun (j : PFin2 0) => PFin2.elim0 j
-      )
-\end{leancode}
 \begin{remark}
     Note that vectors are indexed right-to-left, so \texttt{![α, β]} is β
     and \texttt{![α, β] 1} is α
 \end{remark}
+
+Recall that we defined vectors of size $n$ as functions \texttt{PFin2 n → α}, so 
+
+
+\begin{leancode}
+    def QpfSum.inl {α β} (a : α) : QpfSum α β :=
+      MvPFunctor.mk .inl (fun (i : PFin 2) => match i with
+        | 1 => ![a]
+        | 0 => ![]
+      )
+\end{leancode}
+
 
 We could generate these constructors automatically, but the inner details will still be exposed
 when a user tries to destruct an element of \texttt{QpfSum α β}.
