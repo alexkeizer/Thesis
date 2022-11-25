@@ -11,6 +11,7 @@
 \usepackage{verbatim}   % for the comment environment
 \usepackage{hyperref}
 \usepackage{cleveref}
+\usepackage{framed}
 
 % 
 %   Minted
@@ -253,7 +254,7 @@ appropriate constructions on QPFs, and to provide a proof of concept implementat
 implementation of these macros, and the Lean 4 meta-programming system;
 finally, \cref{ch:conclusion} will show the limitations of the current implementation, discuss potential improvements, and conclude the thesis.
 
-The proof of concept code can be found at \url{https://github.com/alexkeizer/qpf4}, it provides the \data and \codata commands, alongside a \texttt{qpf} command and \texttt{fin\_destr} tactic.
+The proof of concept code can be found at \url{https://github.com/alexkeizer/qpf4}, it provides the \data and \codata commands discussed so far, alongside a \texttt{qpf} command and \texttt{fin\_destr} tactic.
 
 
 
@@ -324,7 +325,16 @@ Together, a type function \lean{F : Type → Type} and a mapping operation \text
 \texttt{List α} is an example of a functor, but so are products (\texttt{α × β}) and sums 
 (\texttt{α ⊕ β})
 
-A function \texttt{f : α → F α} is an \emph{\texttt{F}-algebra}, and inductive types are, in essence, defined by an \emph{initial} such algebra. An \texttt{F}-algebra \texttt{f} is 
+A function \texttt{f : F α → α} is an \emph{\texttt{F}-algebra}, and inductive types are, in essence, defined by an \emph{initial} such algebra. An \texttt{F}-algebra \texttt{f} is initial, if for every \texttt{F}-algebra \texttt{g} there is exactly one arrow that makes the following square commute.
+\begin{todo}
+    initial algebra commuting square
+\end{todo}
+
+Consider the functor \lean{def F α := Unit ⊕ α}, where \texttt{Unit} is a type with exactly one inhabitant, with the algebra \texttt{f : F ℕ → ℕ} that maps the unit case to $0 ∈ \mathbb{N}$ and maps $n ∈ ℕ$ to $n + 1$
+
+\begin{todo}
+    Explain connection between inductive types and initial algebras
+\end{todo}
 
 
 
