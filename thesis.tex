@@ -10,6 +10,7 @@
 \usepackage{unicode-math}
 \usepackage{verbatim}   % for the comment environment
 \usepackage{hyperref}
+\usepackage{cleveref}
 
 % 
 %   Minted
@@ -99,6 +100,8 @@
 \newcommand\inductive{\lean{inductive}}
 \newcommand\data{\lean{data}}
 \newcommand\codata{\lean{codata}}
+\newcommand\Type{\lean{Type}}
+\newcommand\Typen[1]{\lean{Type #1}}
 
 \begin{document}
 
@@ -189,11 +192,8 @@ However, Lean lacks a comprehensive solution to defining infinite data structure
 Ideally, there would be a way for users to write a specification with the same syntax as
 \inductive, but have it be interpreted \emph{coinductively} instead.
 
-\begin{todo}
-    Insert reference to avigad
-\end{todo}
 I have implemented a \codata macro in Lean 4 to do exactly this.
-For example, the following is automatically compiled into a type that is equivalent to \texttt{InfOrFinList}
+For example, the following is automatically compiled into something equivalent to \texttt{InfOrFinList}.
 
 \begin{leancode}
     codata CoList α 
@@ -229,25 +229,32 @@ If we actually wanted trees of infinite depth, but where node have finitely many
 \end{leancode}
 
 \begin{todo}
-    References
+    Talk about recursion and corecursion principles?
 \end{todo}
+
+
 The work was partly inspired by a similar effort to add (co)datatypes to Isabelle/HOL (another interactive theorem prover), 
 and greatly based on work by Avigad et al that established how coinductive types can be encoded in Lean
-(namely, through QPFs, or Quotients of Polynomial Functors) and provided formalizations of the relevant constructions -- albeit in Lean 3, while we are using Lean 4. \cite{avigadDataTypesQuotients2019a}
+(namely, through QPFs, or Quotients of Polynomial Functors) and provided formalizations of the relevant constructions -- albeit in Lean 3, while we are using Lean 4. \cite{biendarraDefiningCoDatatypes}\cite{avigadDataTypesQuotients2019a}
 
 The main contribution of this work is thus to port those formalization to Lean 4,
 to establish a procedure for translating specifications using the \inductive syntax into the
 appropriate constructions on QPFs, and to provide a proof of concept implementation of the \data and \codata macros.
 
-Chapter \ref{ch:background} will explain what QPFs are;
-chapter \ref{ch:porting} will detail the process of porting the QPF formalizations from Lean 3 to Lean 4;
-chapter \ref{ch:enhancing} will describe the enhancements we made to thsee formalizations, which go beyond just porting;
-chapter \ref{ch:procedure} will establish the translation procedure used by \data and \codata;
-chapter \ref{ch:implementing} will go into more technical detail about the (proof of concept)
-implementation of these macros, and the Lean 4 meta-programming system;
-finally, chapter \ref{ch:conclusion} will show the limitations of the current implementation, discuss potential improvements, and conclude the thesis.
+\begin{todo}
+    Improve the following descriptions
+\end{todo}
 
-The code for the implementation can be found at \url{https://github.com/alexkeizer/qpf4}
+\Cref{ch:background} will explain what QPFs are;
+\cref{ch:porting} will detail the process of porting the QPF formalizations from Lean 3 to Lean 4;
+\cref{ch:enhancing} will describe the enhancements we made to thsee formalizations, which go beyond just porting;
+\cref{ch:procedure} will establish the translation procedure used by \data and \codata;
+\cref{ch:implementing} will go into more technical detail about the (proof of concept)
+implementation of these macros, and the Lean 4 meta-programming system;
+finally, \cref{ch:conclusion} will show the limitations of the current implementation, discuss potential improvements, and conclude the thesis.
+
+The proof of concept code can be found at \url{https://github.com/alexkeizer/qpf4}, it provides the \data and \codata commands, alongside a \texttt{qpf} command and \texttt{fin\_destr} tactic.
+
 
 
 
@@ -261,7 +268,120 @@ The code for the implementation can be found at \url{https://github.com/alexkeiz
 \chapter{Background}
 \label{ch:background}
 
+A key concept for the rest of this thesis will be QPF (Quotient of Polynomial Functor), and how we can use them to encode (co)inductive types.
+
+We will assume as little background as possible, and in particular do not assume any knowledge of Lean. Still, some exposure to Category Theory and Functional Programming concepts will be beneficial.
 \begin{todo}
+    Add references?
+\end{todo}
+
+
+The encoding of types as QPFs relies on a key observation; a lot of types are functorial in nature.
+Take, for example, the inductive type of lists we saw in the introduction.
+\begin{leancode}
+    inductive List α 
+    | nil  : List α
+    | cons : α → List α → List α
+\end{leancode}
+
+This defines a function \texttt{List} that takes a type, and returns a new type.
+We call such functions \emph{type functions}.
+
+\begin{remark}
+    Here we mean function in a very concrete sense. In a dependently typed language, such as Lean, types \emph{are} terms. In particular, things like \texttt{Nat} and \texttt{String} are types, but they are also \emph{values} of type \Type.
+    The signature of \texttt{List}, then, is \lean{Type → Type}.
+    So, \Type is the ``type of types'', but it is itself also a value.
+    Section \ref{sec:bg:universes} will cover what, then, is the type of \Type.
+\end{remark}
+
+There is also an obvious mapping function \lean{map : (f : α → β) → List α → List β}, 
+which applies the function \texttt{f} to each element of the argument list.
+
+\begin{remark}
+    \lean{map : α} is Lean syntax for ``\texttt{map} is a value of type \texttt{α}'', and \lean{α → β} is the type of functions from \texttt{α} to \texttt{β}. 
+    If a function takes multiple arguments, it is idiomatic to write them in a \emph{curried} style,
+    so \lean{f : α → β → γ} says that \texttt{f} is a function that takes two arguments, an \texttt{α} and a \texttt{β}, to produce a \texttt{γ}. Arrows are right-associative.
+
+    Finally, \lean{(a : α) → β} is a \emph{dependent} arrow; it is a function from \texttt{α} to \texttt{β}, with the possibility to make the resulting type depend on the \emph{value} \texttt{a} of the first argument. 
+    We used this syntax in the definition of \texttt{map} above, even though it is a regular, non-dependent function, just to give a name to the first argument. 
+    It would have been equivalent to write \lean{map : (α → β) → List α → List β}.
+    Notice also that actually \texttt{α} and \texttt{β} range over all types and are thus arguments to \texttt{map}. Since the value of \texttt{α} and \texttt{β} can be inferred from the other arguments, though, there is no need to supply values for them when calling \texttt{map}, they are implicit arguments. It is possible to explicate implicit arguments, so technically the signature of map is 
+    \begin{center}
+    \lean{map: {α : Type} → {β : Type} → (α → β) → List α → List β}
+    \end{center}
+    However, Lean will automatically add implicit arguments for free variables, so long as it can infer which type this variable should have, so we will generally not add binders for implicit variables. Instead, we adopt the convention that \texttt{α} and \texttt{β} always refers to types. 
+\end{remark}
+
+\begin{todo}
+    Should I explain the exact functor constraints here, or just leave it as is?
+\end{todo}
+
+Together, a type function \lean{F : Type → Type} and a mapping operation \texttt{map : (f: α → β) → F α → F β} form a \emph{functor}, as long as they preserve: 
+\begin{itemize}
+    \item identity maps, so \texttt{F (id α) = id (F α)} (with \texttt{id : (α : Type) → α → α} the map from a type to the identity function on that type)
+    \item compositions, so \texttt{(map f) ∘ (map g) = map (f ∘ g)}
+\end{itemize}
+\texttt{List α} is an example of a functor, but so are products (\texttt{α × β}) and sums 
+(\texttt{α ⊕ β})
+
+A function \texttt{f : α → F α} is an \emph{\texttt{F}-algebra}, and inductive types are, in essence, defined by an \emph{initial} such algebra. An \texttt{F}-algebra \texttt{f} is 
+
+
+
+
+
+\section{Polynomial functors}
+Of special interest are \emph{polynomial functors}, which, intuitively, can be composed from a few primitive operations (such as constants, sums, products and exponentials).
+More formally, we say that a polynomial functor is defined by a set $A$ and an $A$-indexed family of sets $B_a$ as
+\[
+    P(X) = \Sigma_{a ∈ A} B_a \rightarrow X  
+\]
+That is, $P(X)$ is the disjoint union of all functions from $B_a$ to $X$, for every $a ∈ A$.
+We will generally still refer to functors that are not defined as such, but are isomorphic to one of this form, as polynomial.
+
+To encode this in Lean, we replace ``set'' with ``type'' and obtain the following.
+\footnote{To remain consistent, we will use Lean 4 syntax and naming conventions throughout the whole thesis, even though we are still discussing the formalizations as established by Avigad et al here. The difference with the Lean definitions presented in this chapter, and those presented in their original work are superficial.}
+\begin{leancode}
+    structure PFunctor := (A : Type) (B : A → Type)
+\end{leancode}
+
+\begin{remark}
+    \lean{structure} is a simple wrapper around \inductive, for when there is only one constructor.
+    The above is equivalent to
+    \begin{leancode}
+        inductive PFunctor 
+        | mk : (A : Type) → (B : A → Type) → PFunctor
+    \end{leancode}
+\end{remark}
+
+Then, the operations on types and functions are straightforward
+\begin{leancode}
+    /-- Applying `P` to an object of `Type` -/
+    def Obj (α : Type)
+        := Σ x : P.A, P.B x → α
+
+    /-- Applying `P` to a morphism of `Type` -/
+    def map (f : α → β) : P.Obj α → P.Obj β :=
+        fun ⟨a, g⟩ => ⟨a, f ∘ g⟩
+\end{leancode}
+
+\begin{remark}
+    
+\end{remark}
+
+
+
+
+
+
+
+
+
+
+
+\begin{todo}
+    Mention difference inductive types and families
+
     It is important to clarify that we're only considering inductive \emph{types}, 
 for which the recursive occurrences of the type being declared must not use other values for the 
 parameters.
@@ -276,7 +396,8 @@ Suppose, for example
 
 
 
-
+\section{Type Universes}
+\label{sec:bg:universes}
 
 
 
