@@ -21,8 +21,16 @@
 \usepackage[outputdir=./out]{minted}
 
 % instruct minted to use our local theorem.py
-\newmintinline[lean]{lean4.py:Lean4Lexer -x}{bgcolor=white, fontsize=\small}
+\newmintinline[lean]{lean4.py:Lean4Lexer -x}{fontsize=\small}
 \newminted[leancode]{lean4.py:Lean4Lexer -x}{fontsize=\small}
+
+% Lean code that does not typecheck/compile
+\newminted[badleancode]{lean4.py:Lean4Lexer -x}{%
+    fontsize=\small,%
+    frame=leftline,%
+    framesep=0mm,%
+    rulecolor=red%
+}
 
 % Disable the red boxed minted will put around "syntax errors" 
 \AtBeginEnvironment{minted}{%
@@ -108,7 +116,10 @@
     
 
 % todo
-\newenvironment{todo}{\begin{shaded}\begin{trivlist}                         
+\newenvironment{todo}{%
+\definecolor{shadecolor}{HTML}{F8E0E0}%
+\begin{shaded}%
+\begin{trivlist}                         
     \item[\hskip \labelsep {\bfseries Todo:}]}{\end{trivlist}\end{shaded}}
 
 % hidden code    
@@ -274,6 +285,13 @@ implementation of these macros, and the Lean 4 meta-programming system;
 finally, \cref{ch:conclusion} will show the limitations of the current implementation, discuss potential improvements, and conclude the thesis.
 
 The proof of concept code can be found at \url{https://github.com/alexkeizer/qpf4}, it provides the \data and \codata commands discussed so far, alongside a \texttt{qpf} command and \texttt{fin\_destr} tactic.
+
+The code snippets in this thesis are tested with version \texttt{leanprover/lean4:nightly-2022-04-28}. Code that (intentionally) does not typecheck, is typeset with a red line, like so:
+\begin{badleancode}
+
+    def Foo := Bar -- whoops, Bar does not exist
+
+\end{badleancode}
 
 
 
@@ -531,17 +549,28 @@ The generalization of M and W-types to the multivariate case is left as an exerc
 
 
 \section{Inductive Families}
-\begin{todo}
-    Mention difference inductive types and families
+It is important to clarify that we're only considering inductive \emph{types}, 
+for which the recursive occurrences of the type being declared must not use other values for the type parameters. Lean also has inductive \emph{families} of types for which this restriction does not hold.
 
-    It is important to clarify that we're only considering inductive \emph{types}, 
-for which the recursive occurrences of the type being declared must not use other values for the 
-parameters.
+Consider, for example, an inductive definition of vectors, i.e., lists of known length $n$.
+\begin{badleancode}
+    inductive BadVector (α : Type u) (n : Nat)
+    | nil   : BadVector α 0
+    | cons  : α → BadVector α n → BadVector α (n+1)
+\end{badleancode}
 
-Suppose, for example 
+This won't compile, because this defines an inductive type, and the constructors mention \texttt{BadVector α 0} and \texttt{BadVector α (n+1)}, while they are only allowed to mention \texttt{BadVector α n}.
 
-    Use example of \texttt{Vector α n}
-\end{todo}
+It is only variable \texttt{n} that changes. The syntax for an inductive family is very similar; we can promote \texttt{n} from parameter to \emph{index} by removing the binder, and giving a type signature.
+
+\begin{leancode}
+    inductive GoodVector (α : Type u) : Nat → Type _
+    | nil   : GoodVector α 0
+    | cons  : α → GoodVector α n → GoodVector α (n+1)
+\end{leancode}
+
+Inductive families do not correspond to initial algebras in the same way that inductive types do, and the constructions as QPFs \emph{fundamentally} don't support inductive families, nor the coinductive analogue.
+Hence, we shall limit ourselves to just (co)inductive types.
 
 
 
