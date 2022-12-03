@@ -1160,156 +1160,142 @@ Then, \lean{F} can simply be defined as the composition of \lean{G} with \lean{!
 
 
 
-We will start by giving example specifications, and showing how to represent each as a (co)fixpoint
-of a QPF manually.
+% We will start by giving example specifications, and showing how to represent each as a (co)fixpoint
+% of a QPF manually.
 
-The \leanm{inductive} keyword encompasses three concepts: sums, products, and recursion.
-Let's forget about the latter for a second, and look at a non-recursive type
-\begin{leancode}
-    inductive Foo (α β γ : Type)
-    | bar : α → β → Foo α β γ
-    | qux : γ → Foo α β γ
-\end{leancode}
-We can replace the two arguments of the \leanm{bar} constructor by their product.
-\begin{leancode}
-    inductive Foo₂ (α β γ : Type)
-    | bar : (α × β) → Foo₂ α β γ
-    | qux : γ → Foo₂ α β γ
-\end{leancode}
-Having two constructor with a single argument just means taking their sum.
-\begin{leancode}
-    def Foo₃ (α β γ : Type) :=
-        (α × β) ⊕ β
-\end{leancode}
-
-
-
-
-\section{Polynomial Functors}
-
-Recall that we formalized polynomial functors, and their action on types, as  
-\begin{leancode}
-    structure MvPFunctor (n : Nat) :=
-        (A : Type u) (B : A → TypeVec.{u} n)
-
-    def MvPFunctor.Obj (P : MvPFunctor n) : TypeFun n
-        := fun α => Σ a : P.A, P.B a ⟹ α
-\end{leancode}
-
-That is, a polynomial functor $P$ is defined by some type $A$, where each element represents some 
-constructor of type $P(x_0, ..., x_{n-1})$, and a family of types $B_{a, i}$, with $a ∈ A$ and $i < n$, 
-where each element of $B_{a,i}$ is a label for an argument of type $x_i$ needed by constructor $a$.
-
-These can of course be any type, and this flexibility is useful in certain constructions,
-but ultimately the functor is defined by their \emph{cardinality}, i.e., how many inhabitants types 
-$A$ and $B_{a,i}$ have. Any additional structure of these types is not relevant for the behaviour of 
-the functor.
-
-Consequently, we can express any polynomial functor (up to isomorphism, at least) with the following
-shorthand.
-
-\begin{leancode}
-    def MvPFunctor.mk' {n : Nat} (ctors : List (Vec Nat n)) 
-        : MvPFunctor n
-    :=  let A := PFin2 ctors.length
-        let B := fun a i => PFin2 (ctors.get a.toFin i)
-        ⟨A, B⟩
-\end{leancode}
-
-Here \leanm{PFin2 n} is the type of natural numbers strictly less than $n$, which gives us an easy
-way to construct types of arbitrary (but finite) cardinality $n$.
-
-In effect, \leanm{ctors} is a matrix of fixed width $n$ (but arbitrary height). 
-Each row represents a constructor, the value in the $i$-th column tells us how many elements of the 
-$i$-th type argument are required in the constructor.
-
-\subsubsection*{Products \& Sums}
-For example, consider a (binary) product, which could be inductively defined as 
-\begin{leancode}
-    inductive Prod α β
-      | mk : α → U → Prod T U
-\end{leancode}
-
-We can define the corresponding functor, using our abbreviation as
-\begin{leancode}
-    def Prod.P : MvPFunctor 2 
-      := .mk' [
-        ![1, 1]
-      ]
-\end{leancode}
-At a glance, we see that \leanm{P ![α, β]} has a single constructor, and this constructor takes one
-argument of type \leanm{α} and one argument of \leanm{β}.
-This definition corresponds to the following
-\begin{leancode}
-    def Prod.P' : MvPFunctor 2 
-      :=  let A := PFin2 1
-          let B := fun _ => ![PFin2 1, PFin2 1]
-          ⟨A, B⟩
-\end{leancode}
-
-
-
-Another fundamental functor is the (binary) sum. Inductively, it looks like this
-\begin{leancode}
-    inductive Sum α β 
-      | inl : α → Sum α β 
-      | inl : β → Sum α β 
-\end{leancode}
-It has two constructors, so we use a matrix with two rows to define the polynomial functor.
-\begin{leancode}
-    def Sum.P : MvPFunctor
-\end{leancode}
+% The \leanm{inductive} keyword encompasses three concepts: sums, products, and recursion.
+% Let's forget about the latter for a second, and look at a non-recursive type
+% \begin{leancode}
+%     inductive Foo (α β γ : Type)
+%     | bar : α → β → Foo α β γ
+%     | qux : γ → Foo α β γ
+% \end{leancode}
+% We can replace the two arguments of the \leanm{bar} constructor by their product.
+% \begin{leancode}
+%     inductive Foo₂ (α β γ : Type)
+%     | bar : (α × β) → Foo₂ α β γ
+%     | qux : γ → Foo₂ α β γ
+% \end{leancode}
+% Having two constructor with a single argument just means taking their sum.
+% \begin{leancode}
+%     def Foo₃ (α β γ : Type) :=
+%         (α × β) ⊕ β
+% \end{leancode}
 
 
 
 
-\subsection*{Universe polymorphism}
+% \section{Polynomial Functors}
 
-As an aside, Lean does provide a standard \leanm{Fin n} type which encodes naturals less than $n$.
-However, \leanm{Fin n} has type \leanm{Type}, which forces the arguments to any functor \leanm{P} with
-\leanm{P.A = Fin n} to be in \leanm{Type 0} as well.
+% Recall that we formalized polynomial functors, and their action on types, as  
+% \begin{leancode}
+%     structure MvPFunctor (n : Nat) :=
+%         (A : Type u) (B : A → TypeVec.{u} n)
 
-To illustrate, here is a definition of the product functor, but now in terms of \leanm{Fin}
-\begin{leancode}
-    def Prod.Q : MvPFunctor 2 
-      :=  let A := Fin 1
-          let B := fun _ => ![Fin 1, Fin 1]
-          ⟨A, B⟩
+%     def MvPFunctor.Obj (P : MvPFunctor n) : TypeFun n
+%         := fun α => Σ a : P.A, P.B a ⟹ α
+% \end{leancode}
 
-    -- `Nat` lives in `Type', so both functors are fine
-    #check  
-\end{leancode}
-First, consider the pair \leanm{(Nat, Nat)}. \leanm{Nat} lives in \leanm{Type}, so both functors are 
-fine
-\begin{leancode}
-    #check (P.Obj ![Nat, Nat] : Type)       -- ✓
-    #check (Q.Obj ![Nat, Nat] : Type)       -- ✓
-\end{leancode}
-Then, suppose some \leanm{X} that lives in a higher universe.
-\leanm{P} is able to adjust. 
-\begin{leancode}
-    variable (X : Type 1)
-    #check (P.Obj ![X, X] : Type 1)         -- ✓
-\end{leancode}
-However, \leanm{Q} complains that it expects \leanm{X} to live in \leanm{Type}.
-\begin{leancode}    
-    #check Q.Obj ![X, X]                    -- ×            
-    -- application type mismatch
-    --   Vec.append1 Vec.nil X
-    -- argument
-    --   X
-    -- has type
-    --   Type 1 : Type 2
-    -- but is expected to have type
-    --   Type : Type 1
-\end{leancode}
+% That is, a polynomial functor $P$ is defined by some type $A$, where each element represents some 
+% constructor of type $P(x_0, ..., x_{n-1})$, and a family of types $B_{a, i}$, with $a ∈ A$ and $i < n$, 
+% where each element of $B_{a,i}$ is a label for an argument of type $x_i$ needed by constructor $a$.
 
-Note that \leanm{P} still requires all arguments to live in the same universe, so
-\begin{leancode}
-    #check P.Obj ![X, Nat]                  -- ×
-\end{leancode}
+% These can of course be any type, and this flexibility is useful in certain constructions,
+% but ultimately the functor is defined by their \emph{cardinality}, i.e., how many inhabitants types 
+% $A$ and $B_{a,i}$ have. Any additional structure of these types is not relevant for the behaviour of 
+% the functor.
+
+% Consequently, we can express any polynomial functor (up to isomorphism, at least) with the following
+% shorthand.
+
+% \begin{leancode}
+%     def MvPFunctor.mk' {n : Nat} (ctors : List (Vec Nat n)) 
+%         : MvPFunctor n
+%     :=  let A := PFin2 ctors.length
+%         let B := fun a i => PFin2 (ctors.get a.toFin i)
+%         ⟨A, B⟩
+% \end{leancode}
+
+% Here \leanm{PFin2 n} is the type of natural numbers strictly less than $n$, which gives us an easy
+% way to construct types of arbitrary (but finite) cardinality $n$.
+
+% In effect, \leanm{ctors} is a matrix of fixed width $n$ (but arbitrary height). 
+% Each row represents a constructor, the value in the $i$-th column tells us how many elements of the 
+% $i$-th type argument are required in the constructor.
+
+% \subsubsection*{Products \& Sums}
+% For example, consider a (binary) product, which could be inductively defined as 
+% \begin{leancode}
+%     inductive Prod α β
+%       | mk : α → U → Prod T U
+% \end{leancode}
+
+% We can define the corresponding functor, using our abbreviation as
+% \begin{leancode}
+%     def Prod.P : MvPFunctor 2 
+%       := .mk' [
+%         ![1, 1]
+%       ]
+% \end{leancode}
+% At a glance, we see that \leanm{P ![α, β]} has a single constructor, and this constructor takes one
+% argument of type \leanm{α} and one argument of \leanm{β}.
+% This definition corresponds to the following
+% \begin{leancode}
+%     def Prod.P' : MvPFunctor 2 
+%       :=  let A := PFin2 1
+%           let B := fun _ => ![PFin2 1, PFin2 1]
+%           ⟨A, B⟩
+% \end{leancode}
+
+
+
+% Another fundamental functor is the (binary) sum. Inductively, it looks like this
+% \begin{leancode}
+%     inductive Sum α β 
+%       | inl : α → Sum α β 
+%       | inl : β → Sum α β 
+% \end{leancode}
+% It has two constructors, so we use a matrix with two rows to define the polynomial functor.
+% \begin{leancode}
+%     def Sum.P : MvPFunctor
+% \end{leancode}
+
+
+
+
+% \subsection*{Universe polymorphism}
+
+% As an aside, Lean does provide a standard \leanm{Fin n} type which encodes naturals less than $n$.
+% However, \leanm{Fin n} has type \leanm{Type}, which forces the arguments to any functor \leanm{P} with
+% \leanm{P.A = Fin n} to be in \leanm{Type 0} as well.
+
+% To illustrate, here is a definition of the product functor, but now in terms of \leanm{Fin}
+% \begin{leancode}
+%     def Prod.Q : MvPFunctor 2 
+%       :=  let A := Fin 1
+%           let B := fun _ => ![Fin 1, Fin 1]
+%           ⟨A, B⟩
+
+%     -- `Nat` lives in `Type', so both functors are fine
+%     #check  
+% \end{leancode}
+% First, consider the pair \leanm{(Nat, Nat)}. \leanm{Nat} lives in \leanm{Type}, so both functors are 
+% fine
+% \begin{leancode}
+%     #check (P.Obj ![Nat, Nat] : Type)       -- ✓
+%     #check (Q.Obj ![Nat, Nat] : Type)       -- ✓
+% \end{leancode}
+% Then, suppose some \leanm{X} that lives in a higher universe.
+% \leanm{P} is able to adjust. 
+% \begin{leancode}
+%     variable (X : Type 1)
+%     #check (P.Obj ![X, X] : Type 1)         -- ✓
+% \end{leancode}
+% However, \leanm{Q} complains that it expects \leanm{X} to live in \leanm{Type}.
+% \begin{leancode}    
+%     #check Q.Obj ![X, X]                    -- ×            
 %     -- application type mismatch
-%     --   Vec.append1 (Vec.append1 Vec.nil ℕ) X
+%     --   Vec.append1 Vec.nil X
 %     -- argument
 %     --   X
 %     -- has type
@@ -1317,31 +1303,51 @@ Note that \leanm{P} still requires all arguments to live in the same universe, s
 %     -- but is expected to have type
 %     --   Type : Type 1
 % \end{leancode}
-does not typecheck.
+
+% Note that \leanm{P} still requires all arguments to live in the same universe, so
+% \begin{leancode}
+%     #check P.Obj ![X, Nat]                  -- ×
+% \end{leancode}
+% %     -- application type mismatch
+% %     --   Vec.append1 (Vec.append1 Vec.nil ℕ) X
+% %     -- argument
+% %     --   X
+% %     -- has type
+% %     --   Type 1 : Type 2
+% %     -- but is expected to have type
+% %     --   Type : Type 1
+% % \end{leancode}
+% does not typecheck.
 
 
 
-\subsection*{Sum}
-For example, the type \leanm{Sum T U}, representing the disjoint union of types \leanm{T} and \leanm{U},
-is a polynomial functor. It could be specified as:
-\begin{leancode}
-    data Sum T U
-    | inl : T → Sum T U
-    | inr : U → Sum T U
-\end{leancode}
-For $A$, we take a simple enumeration of the constructors
-\begin{leancode}
-    inductive Sum.A
-    | inl : Sum.A
-    | inr : Sum.A
-\end{leancode}
-For $B$, we use the following
-\begin{leancode}
-    def Sum.B : Sum.A → TypeVec n
-    | .inl => ![Unit, Empty]
-    | .inr => ![Empty, Unit]
-\end{leancode}
-This means that an element of \leanm{Sum T U} made with constructor \leanm{inl} contains one inhabitant of \leanm{T} (\leanm{Unit} has exactly one inhabitant) and no inhabitants of \leanm{U} (as the name implies, \leanm{Empty} is not inhabited). Conversely, elements made with constructor \leanm{inr} contain one inhabitant of \leanm{U} and no inhabitant of \leanm{T}.
+% \subsection*{Sum}
+% For example, the type \leanm{Sum T U}, representing the disjoint union of types \leanm{T} and \leanm{U},
+% is a polynomial functor. It could be specified as:
+% \begin{leancode}
+%     data Sum T U
+%     | inl : T → Sum T U
+%     | inr : U → Sum T U
+% \end{leancode}
+% For $A$, we take a simple enumeration of the constructors
+% \begin{leancode}
+%     inductive Sum.A
+%     | inl : Sum.A
+%     | inr : Sum.A
+% \end{leancode}
+% For $B$, we use the following
+% \begin{leancode}
+%     def Sum.B : Sum.A → TypeVec n
+%     | .inl => ![Unit, Empty]
+%     | .inr => ![Empty, Unit]
+% \end{leancode}
+% This means that an element of \leanm{Sum T U} made with constructor \leanm{inl} contains one inhabitant of \leanm{T} (\leanm{Unit} has exactly one inhabitant) and no inhabitants of \leanm{U} (as the name implies, \leanm{Empty} is not inhabited). Conversely, elements made with constructor \leanm{inr} contain one inhabitant of \leanm{U} and no inhabitant of \leanm{T}.
+
+
+
+
+
+
 
 
 
