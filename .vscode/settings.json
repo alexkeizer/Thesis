@@ -6,6 +6,7 @@
         "equational",
         "functorial",
         "functoriality",
-        "prover"
+        "prover",
+        "typeclass"
     ]
 }
