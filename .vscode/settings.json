@@ -3,9 +3,11 @@
     "cSpell.words": [
         "Avigad",
         "coinductive",
+        "datatypes",
         "equational",
         "functorial",
         "functoriality",
-        "prover"
+        "prover",
+        "typeclass"
     ]
 }
