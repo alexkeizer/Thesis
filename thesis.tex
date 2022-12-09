@@ -153,17 +153,26 @@
 %   Custom commands
 % 
 
-\newcommand\lean[1]{{%
+\newcommand\lean[1]{%
+\ifx\leanmode\undefined%
 \def\leanmode{1}%
-\small \texttt{#1}%
-\undef\leanmode%
-}}
+\texttt{\small #1}%
+\undef\leanmode%%
+\else%
+\texttt{#1}%
+\fi%
+}
+
 \newcommand\keyword[1]{{\color{keywordcolor} \textbf{\lean{#1}}}}
+
 \newcommand\inductive{{\keyword{inductive}}}
 \newcommand\data{\keyword{data}}
 \newcommand\codata{\keyword{codata}}
+\newcommand\ldef{\keyword{def}}
+
 \newcommand\Type{\leanm{Type}}
 \newcommand\Typen[1]{\leanm{Type #1}}
+
 
 \begin{document}
 
@@ -329,30 +338,30 @@ The thesis also contains code that (intentionally) does not typecheck. These sni
 \chapter{Background}
 \label{ch:background}
 
-A key concept for the rest of this thesis will be QPF (Quotient of Polynomial Functor), and how we can use them to encode (co)inductive types.
+A key concept for the rest of this thesis will be QPF (Quotient of Polynomial Functor), and how we can use them to encode (co)inductive types. The current chapter serves to illuminate this notion, and explain relevant parts of the Lean system along the way.
 
-We will assume as little background as possible, yet, some (minimal) exposure to category theory and functional programming concepts will be beneficial to understanding. Readers lacking this background might find references at \cite{awodeyCategoryTheory2010, milewskiCategoryTheoryProgrammers} for category theory and \cite{christiansenFunctionalProgrammingLean} for functional programming.
+We will assume as little background knowledge as possible, yet, some (minimal) exposure to category theory and functional programming concepts will be beneficial to understanding. Readers can find references at \cite{awodeyCategoryTheory2010, milewskiCategoryTheoryProgrammers} for category theory and \cite{christiansenFunctionalProgrammingLean} for functional programming.
 
 % \begin{todo}
 %     Add references for FP, maybe The Little Typer?
 % \end{todo}
 
 \begin{remark}
-    We will use remarks like this one below code snippets to explain Lean syntax and concepts that might not be familiar. We don't assume any knowledge of Lean, but the interested reader is invited to consult the online documentation, or ``Functional Programming in Lean'' for a more comprehensive introduction.
-    \cite{avigadTheoremProvingLean}\cite{christiansenFunctionalProgrammingLean}
+    We will use remarks like this one below code snippets to explain Lean syntax and concepts that might not be familiar. We don't assume any knowledge of Lean, but the interested reader is invited to consult the online documentation, or ``Functional Programming in Lean'' for a more comprehensive introduction
+    \cite{avigadTheoremProvingLean,christiansenFunctionalProgrammingLean}.
 \end{remark}
 
 
 
 The encoding of types as QPFs relies on a key observation; a lot of types are functorial in nature.
-Take, for example, the inductive type of lists we saw in the introduction.
+Take, for example, the inductive type of lists, as presented in the introduction.
 \begin{leancode}
     inductive List α 
     | nil  : List α
     | cons : α → List α → List α
 \end{leancode}
 
-This defines a function \lean{List} that takes a type, and returns a new type.
+This defines a function \lean{List} that takes a type, α, and returns a new type, whose elements represent lists of α.
 We call such functions \emph{type functions}.
 
 \begin{remark}
@@ -400,7 +409,7 @@ Consider the inductive type of natural numbers.
     | succ : Nat → Nat
 \end{leancode}
 
-Then, define the functor \leanm{def F α := Unit ⊕ α}, where \lean{Unit} is a type with exactly one inhabitant, with the algebra \lean{f : F Nat → Nat} that maps the unit case to \lean{zero} and maps every \lean{(n : Nat)} to \lean{succ n}. The inductive properties of \lean{Nat} are exactly what makes this algebra initial.
+Then, define the functor \lean{\ldef{} F$_\lean{nat}$ α := Unit ⊕ α}, where \lean{Unit} is a type with exactly one inhabitant, with the algebra \lean{f : F$_\lean{nat}$ Nat → Nat} that maps the unit case to \lean{zero} and maps every \lean{(n : Nat)} to \lean{succ n}. The inductive properties of \lean{Nat} are exactly what makes this algebra initial.
 Similarly, there is a connection between coinductive types and final coalgebras.
 
 However, not all functor have initial algebras, or final coalgebras.
@@ -459,8 +468,16 @@ The \emph{W-type} of a polynomial functor \lean{P} is the type of exactly such t
     | mk (a : P.A) (f : P.B a → W P) : W P
 \end{leancode}
 
+By construction, the W-type is the initial algebra of \lean{P}.
+
+It is important to make a distinction between types that \emph{are} polynomial functor, and types that are (equivalent to) W-types \emph{of} polynomial functors. 
+For example, \lean{Nat} is not a polynomial functor, but it \emph{is} the W-type of a polynomial functor (namely, \lean{F$_\lean{nat}$}). 
+
+Conversely, \lean{List} is both. It is a polynomial functor: take $A = \mathbb{N}$ and $B_n = \{0,..,n-1\}$, then a list of $n$ elements is encoded as a pair with shape $n$, and content $f : \{0,..,n-i\}$ mapping each $i < n$ to the $i$-th element of the list. 
+Simultaneously, \lean{List α}, for every \lean{α} is also the W-type of a \emph{different} polynomial functor, defined by $A = \texttt{Unit} ⊕ α$, where $B$ of the unit value is the empty type and $B_a = \lean{Unit}$ for every $a : α$. The W-type of this polynomial functor consists of trees where leaves represent the empty list, and internal nodes are labelled with an element of type \lean{α} (the head of the list) and have exactly one subtree (the tail of the list).
+
 \subsection*{M-types}
-Coinductive types are similar, except that the trees they are represented by may be of infinite depth. Encoding these in Lean is quite a bit more involved; we present only a sketch of its construction.
+Coinductive types are similar, except that the trees they are represented by may be of infinite depth. Encoding these in Lean is quite a bit more involved.
 
 An \emph{M-type} of a polynomial functor \lean{P} is the type of potentially infinite depth trees, where shapes $a ∈ A$ distinguish different kind of nodes, and the cardinality of $B_a$ determines the number of children nodes of type $a$ have.
 
@@ -472,20 +489,30 @@ An \emph{approximation} of an M-type up to depth $n$ is the type of such trees o
   | intro {n} : (a : P.A) → (P.B a → MAprrox P n) → MAprrox P (succ n)
 \end{leancode}
 
-Then, we define what it means for approximations \emph{agree}, whence an M-type is just an infinite series of approximations of increasing depth that are consistent.
+Then, we define what it means for approximations \emph{agree} --- either the first approximation must be a ``continue'' leaf, or both approximations have nodes of the same kind as root, and the corresponding subtrees recursively agree --- whence an M-type is just an infinite series of approximations of increasing depth where every approximation agrees with the next.
 
 \begin{leancode}
   inductive Agree : ∀ {n : Nat}, MApprox P n → MApprox P (n + 1) → Prop
   | continu (x : MApprox P 0) (y : MApprox P 1) : Agree x y
-  | intro {n} {a} (x : F.B a → MApprox P n) (x' : F.B a → MApprox P (n + 1)) :
-    (∀ i : F.B a, Agree (x i) (x' i)) → Agree (MApprox.intro a x) (MApprox.intro a x')
+  | intro {n} {a}   (x  : F.B a → MApprox P n) 
+                    (x' : F.B a → MApprox P (n + 1)) 
+                    : (∀ i : F.B a, Agree (x i) (x' i))
+                    → Agree (MApprox.intro a x) (MApprox.intro a x')
 
   structure M := 
     (approx : ∀ n, MApprox P n) (consistent : ∀ n, Agree (approx n) (approx (n+1)))
 \end{leancode}
 
-\subsection*{Fixpoints}
-Recall that (co)inductive types are represented by initial algebras and final coalgebras. The M and W-types of a polynomial functor are exactly such (co)algebras. Thus, defining a polynomial functor also defines a freely generated inductive and coinductive type.
+The M-type of a polynomial functor is, by construction, its final coalgebra.
+
+\begin{todo}
+    % \subsection*{Fixpoints}      
+
+    Clarify fixpoints?
+
+    Recall that (co)inductive types are represented by initial algebras and final coalgebras. The M and W-types of a polynomial functor are exactly such (co)algebras. Thus, defining a polynomial functor also defines a freely generated inductive and coinductive type.
+
+\end{todo}
 
 \section{Quotients}
 Lean does not just have \inductive{} types, it also supports quotients of types. For example, it is common to define a multiset as the quotient of lists through the relation that equates lists up to permutation.
@@ -542,7 +569,11 @@ For example, recall the \lean{Multiset} quotient type. One might want to use it 
 
 Lean rejects this; it is not allowed to nest recursive occurences of \lean{UnorderedTree} behind a quotient type.
 
-On the other hand, if 
+On the other hand, if we (manually) define \lean{Multiset} as a QPF with the same semantics, then we can freely compose it in (co)datatype specifications.
+\begin{leancode}
+  data UnorderedTree α
+  | node : α → Multiset (UnorderedTree α) → UnorderedTree α
+\end{leancode}
 
 
 \begin{todo}
@@ -603,6 +634,8 @@ The other constructions are easily made universe polymorphic as well.
 
 
 \section{Multivariate Functors}
+\label{sec:mvfunctor}
+
 Earlier, we mentioned that sums and products (written as \lean{α ⊕ β} and \lean{α × β}, respectively, in Lean) are functorial in both arguments.
 They are, in fact, polynomial, but, both take two types as arguments and don't fit in the definitions presented so far. We have to generalize from the univariate case to \emph{multivariate} functors.
 
