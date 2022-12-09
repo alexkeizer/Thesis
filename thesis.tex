@@ -612,7 +612,11 @@ It is difficult to reason about $n$-ary curried functions, where $n$ is arbitrar
     def TypeFun (n : Nat) := (TypeVec.{u} n) → Type v
 \end{leancode}
 Where \lean{TypeVec} is a \emph{type vector}, i.e., a list of exactly $n$ elements of \Typen{u}.
-Notice that the arguments all live in universe $u$, but the result lives in a potentially different universe $v$. 
+We define such vectors as a map from a canonical finite type \lean{Fin2 n}, which has exactly $n$ inhabitants.
+\begin{leancode}
+    def TypeVec (n : Nat) := (i : Fin2 n) → Type u
+\end{leancode}
+Notice that all arguments to a \lean{TypeFun} live in the same universe $u$, and the result lives in a potentially different universe $v$. 
 Most constructions do require that these universes coincide, and use \lean{TypeFun.\{u,u\}}.
 
 Suppose that \lean{Sum'} is the uncurried version of sums, then we would write \lean{Sum' ![α₁, α₂]} to use it with argument types α₁ and α₂ The \lean{map} operation now takes not one function, but a vector (i.e., list of known size) of $n$ functions, each going from \lean{αᵢ} to \lean{βᵢ}. The type of such vectors of functions is written, e.g, \lean{![α₁, α₂] ⟹ ![β₁, β₂]} (when $n=2$).
@@ -662,24 +666,26 @@ The generalization of M and W-types to the multivariate case is left as an exerc
 
 
 \section{Inductive Families}
+\label{sec:ind_families}
+
 It is important to clarify that we're only considering inductive \emph{types}, 
 for which the recursive occurrences of the type being declared must not use other values for the type parameters. Lean also has inductive \emph{families} of types for which this restriction does not hold.
 
-Consider, for example, an inductive definition of vectors, i.e., lists of known length $n$.
+Consider, for example, \lean{Fin2}, the type of natural numbers less than $n$.
 \begin{badleancode}
-    inductive BadVector (α : Type u) (n : Nat)
-    | nil   : BadVector α 0
-    | cons  : α → BadVector α n → BadVector α (n+1)
+    inductive BadFin2 (n : Nat)
+    | fz : BadFin2 (n+1)
+    | fs : BadFin2 n → BadFin2 (n+1)
 \end{badleancode}
 
-This won't compile, because this defines an inductive type, and the constructors mention \lean{BadVector α 0} and \lean{BadVector α (n+1)}, while they are only allowed to mention \lean{BadVector α n}.
+This won't compile, because this defines an inductive type, and the constructors mention \lean{BadFin2 (n+1)}, while they are only allowed to mention \lean{BadFin2 n}.
 
-It is only variable \lean{n} that changes. The syntax for an inductive family is very similar; we can promote \lean{n} from parameter to \emph{index} by removing the binder, and giving a type signature.
+The syntax for an inductive family is very similar; we can promote \lean{n} from parameter to \emph{index} by removing the binder, and giving a type signature.
 
 \begin{leancode}
-    inductive GoodVector (α : Type u) : Nat → Type _
-    | nil   : GoodVector α 0
-    | cons  : α → GoodVector α n → GoodVector α (n+1)
+    inductive Fin2 : Nat → Type
+    | fz : Fin2 (n+1)
+    | fs : Fin2 n → Fin2 (n+1)
 \end{leancode}
 
 Inductive families do not correspond to initial algebras in the same way that inductive types do, and the constructions as QPFs \emph{fundamentally} don't support inductive families, nor the coinductive analogue.
@@ -811,25 +817,81 @@ Even worse, in some situations different mentions of \lean{MvQpf F} might infer 
 
 Composition of an $n$-ary functor \lean{F} with $m$-ary functors \lean{G₀, G₁, ..., Gₙ₋₁} originally took the following variables.
 
-\begin{todo}
-    Type class inference for vectors, VecMvFunctor / VecMvQpf
-\end{todo}
+%LEANIGNORE
+\begin{leancode}
+    variable {n m : Nat} 
+             (F : TypeVec.{u} n → Type _) 
+             [fF : MvFunctor F] 
+             [q : MvQpf F] 
+             (G : Fin2 n → TypeVec.{u} m → Type u)
+             [fG : ∀ i, MvFunctor (G i)] 
+             [q' : ∀ i, MvQpf (G i)]
+\end{leancode}
+
+Firstly, by the preceding section, we can leave out the \lean{MvFunctor} assumptions, since they are now part of the \lean{MvQpf} assumptions.
+
+Secondly, the last variable, \lean{q'}, states that \lean{G i}, for every \lean{i} of type \lean{Fin2 n}, is a QPF.
+The square brackets indicate that it is a \emph{typeclass variable}, which should be filled in by typeclass \emph{inference}.
+
+As there are only $n$ inhabitants of \lean{Fin2 n}, the universally quantified inference problem \lean{∀ i, MvQpf (G i)} neatly reduces to $n$ non-qualified inference problems \lean{MvQpf (G 0)}, \lean{MvQpf (G 1)}, etc.
+
+However, Lean's inference engine does not seem to be able to make this step by itself, failing to infer an instance for
+\lean{∀ i, MvQpf (G i)} even if an instance of \lean{MvQpf} can be inferred for each individual type function \lean{Gᵢ}.
+
+So, we introduce a new typeclass, \lean{VecMvQpf}, which wraps the universally quantified typeclass problem.
+\begin{leancode}
+    class VecMvQpf (G : Vec (TypeFun m) n) where
+        prop : ∀ i, MvQpf (G i)
+\end{leancode}
+
+Then we can register instances by recursion on the size $n$ of the vector $G$.
+For the base case $n=0$, the vector \lean{G} is empty, and its vacuous to say all elements are QPFs.
+
+%LEANIGNORE
+\begin{leancode}
+    instance instNil    (G : Vec (TypeFun m) 0) : VecMvQpf G
+\end{leancode}
+
+For $n+1$, we recurse in the \lean{succ} typeclass variable.
+
+%LEANIGNORE
+\begin{leancode}
+    instance instSucc   (G : Vec (TypeFun m) (n + 1)) 
+                        [zero : MvQpf (G .fz)]
+                        [succ : VecMvQpf (fun i => G i.fs)] : 
+                            VecMvQpf G 
+\end{leancode}
+
+There is no need to write typeclass variables in terms of \lean{VecMvQpf} because of the following instance.
+%LEANIGNORE
+\begin{leancode}
+    instance instUnbox [inst : VecMvQpf G] : 
+        ∀i, MvQpf (G i)
+\end{leancode}
+
+Note that writing \lean{instNil} and \lean{instSucc} in terms of universally qualified \lean{MvQpf} does not work.
+It seems that Leans inference engine puts a limit on recursion depth when trying to infer a universally quantified typeclass problem, whereas it will recurse deeper for \lean{VecMvQpf}.
+
 
 
 
 
 \section{Universe polymorphic finite type}
 \label{sec:enhance:pfin2}
-Originally, \lean{Fin2} was defined as the following, straightforward, inductive family.
-\begin{todo}
-    Fin2 def
-\end{todo}
+Originally, \lean{Fin2} was defined as the following, straightforward, inductive family, as seen in \cref{sec:ind_families}.
+\begin{leancode}
+    inductive Fin2 : Nat → Type
+    | fz : Fin2 (n+1)
+    | fs : Fin2 n → Fin2 (n+1)
+\end{leancode}
 
-However, as such \lean{Fin2 n} had to live in \Type.
+However, this definition forces \lean{Fin2} to live in \Type.
 During the project a need arose for a finite type with exactly $n$ inhabitants, but in arbitrary universes. Thus, the \emph{universe polymorphic} \lean{PFin2} type was added.
-\begin{todo}
-    PFin2 def
-\end{todo}
+\begin{leancode}
+    inductive PFin2 : Nat → Type u
+    | fz : PFin2 (n+1)
+    | fs : PFin2 n → Fin2 (n+1)
+\end{leancode}
 Whence \lean{Fin2} was changed to just be an alias for \lean{PFin2.{0}}.
 Of course, most theorems and definitions for \lean{Fin2} were easily redefined in terms of \lean{PFin2}.
 
@@ -987,23 +1049,13 @@ Using these counts, we define the child family of types, and subsequently, the p
 \end{remark}
 From here on, the construction is the same for both types;
 We'll show it just for \lean{Sum}.
-\begin{center}
-    \begin{leancode}
+
+\begin{leancode}
     def Sum.P  : MvPFunctor 2 := MvPFunctor.mk Sum.HeadT  Sum.ChildT
-
     
-    def QpfSum.Internal : TypeFun 2  := MvPFunctor.Obj Sum.P
+    def QpfSum.Internal : TypeFun 2   := MvPFunctor.Obj Sum.P
     def QpfSum : Type → Type → Type := TypeFun.curried QpfSum.Internal
-
-    -- instance : MvQpf 
-  \end{leancode}
-\end{center}
-
-
-
-\begin{todo}
-    Show that QpfSum.Internal has an instance of MvQpf
-\end{todo}
+\end{leancode}
 
 And we're done! However, these qpf-based versions of the types are still not very nice to use.
 For example, if we want to construct a pair in \leanm{QpfProd}, we have to go through \leanm{MvPFunctor.mk},
@@ -1221,7 +1273,7 @@ If no such \lean{G} exists, it means the original equation was not valid.
 
 Then, we recursively call the composition pipeline, each time defining a new functor \lean{Hᵢ ... = eᵢ}, where \lean{Hᵢ} takes the same parameter as the original desired functor \lean{F}.
 
-Then, \lean{F} can simply be defined as the composition of \lean{G} with \lean{![H₁, ..., Hₘ]}.
+Finally, \lean{F} can simply be defined as the composition of \lean{G} with \lean{![H₁, ..., Hₘ]}.
 
 
 
