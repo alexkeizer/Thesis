@@ -7,6 +7,7 @@
         "equational",
         "functorial",
         "functoriality",
+        "implicits",
         "prover",
         "typeclass"
     ]

@@ -64,15 +64,14 @@
 
 % Unicode glyphs
 
-\newcommand\leanoperator[1]{{%
+\newcommand\leanoperator[1]{%
 \ifx\leanmode\undefined%
-{}%
-\else%
-\color{operatorcolor}%
-\fi%
 #1%
-}}
-\newcommand\leanmathoperator[1]{\ensuremath{\mathop\leanoperator{#1}}} 
+\else%
+{\color{operatorcolor} #1}%
+\fi%
+}
+\newcommand\leanmathoperator[1]{\ensuremath{\leanoperator{#1}}} 
 \newunicodechar{→}{\leanmathoperator{\rightarrow}}
 \newunicodechar{⟹}{\leanmathoperator{\Longrightarrow}}
 \newunicodechar{⋅}{\leanmathoperator{\cdot}}
@@ -354,65 +353,95 @@ We will assume as little background knowledge as possible, yet, some (minimal) e
 
 
 The encoding of types as QPFs relies on a key observation; a lot of types are functorial in nature.
-Take, for example, the inductive type of lists, as presented in the introduction.
+Take, for example, the inductive type of lists, specified as
 \begin{leancode}
-    inductive List α 
+    inductive List (α : Type)
     | nil  : List α
     | cons : α → List α → List α
 \end{leancode}
 
 This defines a function \lean{List} that takes a type, α, and returns a new type, whose elements represent lists of α.
-We call such functions \emph{type functions}.
+We call such functions \emph{type functions}. Note that we mean function here in a very concrete sense.
+
+\section{Types are Terms \& Type Universes}
+In a dependently typed language, such as Lean, types \emph{are} terms. In particular, things like \lean{Nat} and \lean{String} are types, but they are also \emph{values} of type \Type.
+The signature of \lean{List}, then, is \leanm{Type → Type}, just like the signature of, e.g., \lean{Nat.add} (binary addition of natural numbers) is \leanm{Nat → Nat → Nat}.
 
 \begin{remark}
-    Here we mean function in a very concrete sense. In a dependently typed language, such as Lean, types \emph{are} terms. In particular, things like \lean{Nat} and \lean{String} are types, but they are also \emph{values} of type \Type.
-    The signature of \lean{List}, then, is \leanm{Type → Type}.
-    So, \Type{} is the ``type of types'', but it is itself also a value.
-    Section \ref{sec:bg:universes} will cover what, then, is the type of \Type.
+    We also write \leanm{f : α → β} to say ``\lean{f} has type \leanm{α → β}'', meaning that \lean{f} is a function from type \lean{α} to type \lean{β}.
 \end{remark}
 
-There is also an obvious mapping function \leanm{map : (f : α → β) → List α → List β}, 
-which applies the function \lean{f} to each element of the argument list.
+We call \Type{} a \emph{type universe}, i.e., a type whose elements are themselves types. However, \Type{} is again also a value, which needs be of some type.
+It cannot be the case that \leanm{Type : Type}; this leads to Girard's paradox, which is the type theory analogue of Russel's Paradox \cite{girardInterpretationFonctionelleElimination1972}.
+
+Instead, there Lean has an infinite sequence of increasing type universes, so that \leanm{Type : Type 1}, \leanm{Type 1 : Type 2}, and in general, \leanm{Type u : Type (u+1)}. In fact, \leanm{Type} is just a shorthand for \leanm{Type 0}, the smallest type universe.
+
+Universe levels \lean{u} are essentially natural numbers, but they are \textbf{not} first class values, and are indeed very different from elements of \leanm{Nat}.
+In particular, when writing \Typen{u}, the universe \lean{u} is \textbf{not} a regular term. There is a separate grammar, with some minimal builtin operations, that defines valid universe levels.
+
+It is possible, and indeed common to be generic over the universe of some type parameter. For example, the actual, \emph{universe polymorphic} definition of lists specifies that the parameter \lean{α} should live in \lean{Type u}.
+\begin{leancode}
+    inductive List (α : Type u)
+    | nil  : List α
+    | cons : α → List α → List α
+\end{leancode}
+
+Then the signature of \lean{List} becomes \leanm{Type u → Type u}, for any universe level \lean{u}.
+
+\section{Functoriality of type functions}
+
+Returning to our discussion of \lean{List}, there is also an obvious mapping function that lifts a function \lean{f : α → β}, for arbitrary types \lean{α} and \lean{β}, to a function \lean{List α → List β}, by applying \lean{f} to each element of the argument list. Its signature is written as:
+\begin{center}
+    \leanm{map : (f : α → β) → List α → List β}
+\end{center}
 
 \begin{remark}
-    \leanm{map : α} is Lean syntax for ``\lean{map} is a value of type \lean{α}'', and \leanm{α → β} is the type of functions from \lean{α} to \lean{β}. 
     If a function takes multiple arguments, it is idiomatic to write them in a \emph{curried} style,
     so \leanm{f : α → β → γ} says that \lean{f} is a function that takes two arguments, an \lean{α} and a \lean{β}, to produce a \lean{γ}. Arrows are right-associative.
 
-    Finally, \leanm{(a : α) → β} is a \emph{dependent} arrow; it is a function from \lean{α} to \lean{β}, with the possibility to make the resulting type depend on the \emph{value} \lean{a} of the first argument. 
+    Furthermore, \leanm{(a : α) → β} is a \emph{dependent} arrow; it is a function from \lean{α} to \lean{β}, with the possibility to make the resulting type depend on the \emph{value} \lean{a} of the first argument. 
     We used this syntax in the definition of \lean{map} above, even though it is a regular, non-dependent function, just to give a name to the first argument. 
     It would have been equivalent to write \leanm{map : (α → β) → List α → List β}.
-    Notice also that actually \lean{α} and \lean{β} range over all types and are thus arguments to \lean{map}. Since the value of \lean{α} and \lean{β} can be inferred from the other arguments, though, there is no need to supply values for them when calling \lean{map}, they are implicit arguments. It is possible to explicate implicit arguments, so technically the signature of map is 
+
+    Notice also that, as \lean{α} and \lean{β} range over all types, they are thus actually also arguments to \lean{map}. Since the value of \lean{α} and \lean{β} can be inferred from the other arguments, though, there is no need to supply values for them when calling \lean{map}, hence, they can be implicit arguments. 
+    
+    It is possible to explicitly define implicit arguments, using curly brackets \lean{\{...\}}.
     \begin{center}
-    \leanm{map: {α : Type} → {β : Type} → (α → β) → List α → List β}
+    \leanm{map: {α β : Type u} → (α → β) → List α → List β}
     \end{center}
-    However, Lean will automatically add implicit binders for free variables, so long as it can infer which type this variable should have, so we will generally not add binders for implicit variables. Instead, we adopt the convention that \lean{α} and \lean{β} always refers to types.
+    However, Lean will automatically add such implicit binders for free variables, so long as it can infer which type it should have --- this feature is called ``auto bound implicits''. 
+    We generally won't write these implicit binders, instead adopting the convention that \lean{α} and \lean{β} refer to types.
 \end{remark}
 
-Together, a type function \leanm{F : Type → Type} and a mapping operation \lean{map : (f: α → β) → F α → F β} form a \emph{functor}, as long as they preserve: 
+Together, a type function \leanm{F : Type u → Type v} and a mapping operation \lean{map : (f: α → β) → F α → F β} form a \emph{functor}, so long as they preserve: 
 \begin{itemize}
-    \item identity maps, so \lean{F (id α) = id (F α)} (with \lean{id : (α : Type) → α → α} the map from a type to the identity function on that type)
-    \item compositions, so \lean{(map f) ∘ (map g) = map (f ∘ g)}
+    \item \emph{Identity maps}, that is, \lean{F (id α) = id (F α)}, with \lean{id β} the identity function on arbitrary types \lean{β}, and
+    \item \emph{Compositions}, that is, \lean{(map f) ∘ (map g) = map (f ∘ g)}, where \lean{∘} denotes function composition
 \end{itemize}
-\lean{List α} is an example of a functor, but so are products (\lean{α × β}) and sums 
-(\lean{α ⊕ β})
+\lean{List α} is an example of a functor, but so are, e.g., products (\lean{α × β}) and sums 
+(\lean{α ⊕ β}).
 
-A function \lean{f : F α → α} is an \emph{\lean{F}-algebra}, and inductive types correspond to an \emph{initial} such algebra. An \lean{F}-algebra \lean{f} is initial, if for every \lean{F}-algebra \lean{g} there is exactly one arrow that makes the following square commute.
+A function \lean{f : F α → α}, for some fixed type \lean{α}, is called an \emph{\lean{F}-algebra}; inductive types correspond to an \emph{initial} such algebra. To clarify, an \lean{F}-algebra \lean{f} is initial, if for every \lean{F}-algebra \lean{g} there is exactly one arrow \lean{rec} that makes the square of \cref{fig:initial_alg_square} commute.
+\begin{figure}[h]
 \begin{todo}
     initial algebra commuting square
 \end{todo}
 
-Consider the inductive type of natural numbers.
-\begin{leancode}
-    inductive Nat
-    | zero : Nat
-    | succ : Nat → Nat
-\end{leancode}
+\caption{Commuting square for initial $F$-algebras $f : F(α) → α$}
+\label{fig:initial_alg_square}
+\end{figure}
 
-Then, define the functor \lean{\ldef{} F$_\lean{nat}$ α := Unit ⊕ α}, where \lean{Unit} is a type with exactly one inhabitant, with the algebra \lean{f : F$_\lean{nat}$ Nat → Nat} that maps the unit case to \lean{zero} and maps every \lean{(n : Nat)} to \lean{succ n}. The inductive properties of \lean{Nat} are exactly what makes this algebra initial.
-Similarly, there is a connection between coinductive types and final coalgebras.
+Consider the type of natural numbers, \lean{Nat}; we'll show that the constructors for \lean{Nat} 
+Consider a functor ${F_{nat}(α) = \lean{Unit} \mathop{⊕} α}$, where \lean{Unit} is the unit type --- with \lean{unit} as its sole inhabitant --- and \lean{⊕} denotes a sum (disjoint union). On functions $f : α → β$, the obvious choice of mapping operation $F(f) : F(α) → F(β)$ is such that $F(f)(\lean{unit}) = \lean{unit}$ and $F(f)(a) = f(a)$ for all $a : α$.
 
-However, not all functor have initial algebras, or final coalgebras.
+Natural numbers are defined by the constant $0 ∈ \mathbb{N}$ and the function $succ : \mathbb{N} → \mathbb{N}$. Together, these constructors give an algebra $f : F_{nat}(\mathbb{N}) → \mathbb{N}$. 
+
+Let $g : F_{nat}(α) → α$ be an arbitrary $F$-algebra, and define a function $\mathrm{rec} : \mathbb{N} → α$ such that $\mathrm{rec}(0) = g(\lean{unit})$ and  $\mathrm{rec}(n+1) = \mathrm{rec}(g(n))$, for every $n ∈ \mathbb{N}$.
+
+The inductive properties of \lean{Nat} are exactly what makes this algebra initial.
+
+Dually, there is a connection between coinductive types and final coalgebras.
+Not all functors, though, have initial algebras, or final coalgebras.
 % And, it is not, in general, easy to construct such (co)algebras.
 
 
