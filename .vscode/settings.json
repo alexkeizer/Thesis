@@ -3,11 +3,14 @@
     "cSpell.words": [
         "Avigad",
         "coinductive",
+        "datatype",
         "datatypes",
         "equational",
         "functorial",
         "functoriality",
         "implicits",
+        "multiset",
+        "noncomputable",
         "prover",
         "typeclass"
     ]
