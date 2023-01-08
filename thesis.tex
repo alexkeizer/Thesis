@@ -1066,6 +1066,7 @@ details of the Lean meta-programming system (which will be covered in the next c
 
 
 \section{Shape types}
+\label{sec:shape_types}
 
 Arguably the simplest, and most fundamental, inductive types are \leanm{Sum α β} and \leanm{Prod α β},
 representing "either α or β" and "a pair of α and β", respectively.
@@ -1219,7 +1220,7 @@ Which is shorthand for,
 \end{center}
 That is, a function \leanm{PFin2 1 → α} and a function \leanm{PFin2 0 → β}.
 \begin{remark}
-    Note that vectors are indexed right-to-left, so \lean{![α, β]} is β
+    Note that vectors are indexed right-to-left, so \lean{![α, β] 0} is β
     and \lean{![α, β] 1} is α
 \end{remark}
 
@@ -1728,9 +1729,10 @@ The following defines a \lean{Parser} object for the \inductive{} syntax.
 
 Where \lean{declId}, \lean{optDeclSig}, etc. are all parsers, or parser combinators. Combinators \lean{a >> b} and \lean{a <|> b} mean ``first parse \lean{a}, then \lean{b}'' and ``parse \lean{a} \emph{or} \lean{b}'', respectively.
 
-\begin{todo}
-    Should I explain the \lean{«...»} brackets here?
-\end{todo}
+\begin{remark}
+    Notice how we wrote \lean{«...»} brackets around \inductive{}; these brackets allow us to use 
+    keywords as identifiers.
+\end{remark}
 
 It is lower-level than the \keyword{syntax} declaration we saw before, but very similar: this parser accepts an ``inductive'' \emph{atom} (or, literal), followed by a declaration id (\lean{declId}), an optional signature (\lean{optDeclSig}), optionally a `` :='' or ``where'' atom, followed by zero or more (\lean{many}) constructor specifications (\lean{ctor}), and finally, an optional list of typeclasses to derive (\lean{optDeriving}).
 
@@ -1954,10 +1956,81 @@ The relevant function signatures are
 \label{ch:limitations}
 
 
+As mentioned before, the implementation is not yet complete.
+This chapter will explain some limitations in what is implemented so far, and discuss
+additions that seem useful.
+
+\section{Universe Polymorphism}
+
+Recall from \ref{sec:shape_types} that the procedure starts with synthesizing a ``head'' type that
+looks roughly like the following:
+\begin{leancode}
+  inductive HeadT
+    | CtorA : HeadT
+    | CtorB : HeadT
+\end{leancode}
+The names and number of constructors will differ, but crucially Lean will generate a \emph{non} universe 
+polymorphic type. That is, \lean{HeadT} lives in \lean{Type 0}, and only \lean{Type 0}.
+
+As a result, any QPF defined with \data{}/\codata{} will \emph{not} be universe polymorphic.
+For example, our running example of lists,
+\begin{leancode}
+  data List α 
+    | nil  : List α
+    | cons : α → List α → List α
+\end{leancode}
+
+The \inductive{} analogue of this definition \emph{is} polymorphic, but because of this limitation,
+\lean{List} defined in terms of \data{} is \emph{not}.
+  
+
+The solution is fairly simple, we can explicitly state that we want \lean{HeadT} to be polymorphic
+--- recall that the child family of types is universe polymorphic because of the use of \lean{PFin2} (see \ref{sec:shape_types, sec:enhance:pfin2})
+\begin{badleancode}
+
+  inductive HeadT : Type u
+    | CtorA : HeadT
+    | CtorB : HeadT
+
+\end{badleancode}
+
+However, there is a bug in the version of Lean we're using (\texttt{nightly-2022-04-28}) 
+which causes it to reject the above. 
+This bug is already fixed in more recent versions of Lean, 
+so this limitation should be relatively easy to resolve.
 
 
 
 
+\section{User-friendly (co)recursion and (co)induction}
+So far, we've purely focussed on defining (co)datatypes, but, of course, that is not very interesting
+without being able to define operations on these types.
+
+If we just want do structural recursion on a single variable, it's relatively easy to do so directly
+in terms of the fundamental recursion principle on QPFs.
+
+For example, recursively determining the length of a list.
+\begin{leancode}
+def List.length : List α → Nat :=
+  MvQpf.Fix.rec fun as => match as with
+    | .nil                => 0
+    | .cons a (as : Nat)  => as + 1 
+\end{leancode}
+
+Now, it is important that Lean can statically determine that recursive functions terminate for all 
+arguments. \footnote{Lean \emph{can} admit non-terminating functions when they're marked partial, but partial functions are not allowed to be used in proofs}
+
+In the case of structural recursion on a single variable, termination is straightforward, but Lean
+also has a sophisticated \emph{equation compiler} that makes it easy to define functions that recurse
+on multiple variables, with support for termination hints for when it fails to automatically proof
+termination.
+
+It would be interesting to see if the existing equation compiler mechanisms can be re-used
+to also provide a high-level way of defining (co)recursive functions for QPFs.
+
+\subsection*{Coinduction}
+
+Analogous to (co)recursive functions are proofs using (co)induction.
 
 
 
