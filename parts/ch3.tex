@@ -1,0 +1,34 @@
+
+\chapter{Porting the QPF formalization from Lean3 to Lean4}
+\label{ch:porting}
+
+Lean is primarily developed by Leonardo de Moura at Microsoft Research. As an in-progress research project, it explicitly provides no stability guarantees, and indeed, Lean 4 is not backwards compatible with Lean 3.
+This means that the QPF formalizations by Avigad et al.
+% \etal{}
+(\cite{avigadDataTypesQuotients2019a}) are not directly usable. The current chapter details my efforts to port these formalizations to Lean 4.
+
+
+Lean Mathlib is a 
+
+
+
+
+
+\begin{todo}
+    Porting
+    \begin{itemize}
+        \item Mention Lean3 -> Lean4 differences (instability)
+        \item Mention mathlib3 -> mathlib4 (mention that qpfs are part of mathlib3)
+        \item Mathport 
+                \begin{itemize}
+                    \item Takes care of syntactic differences, different naming conventions (mostly)
+                    \item Proofs did not translate well (a lot of tactics were missing)
+                \end{itemize}
+        \item \url{https://leanprover.zulipchat.com/#narrow/stream/287929-mathlib4/topic/mathport.3A.20cases_on.20.3D.3E.20casesOn}
+            \begin{itemize}
+                \item Implicit \lean{motive} arguments were being inferred differently
+                \item \lean{set\_option pp.analyze true}
+                \item Fix: be more explicit with arguments and type ascription
+            \end{itemize}
+    \end{itemize}
+\end{todo}
