@@ -1,12 +1,50 @@
-\newcommand{\thesistext}{
-\input{parts/ch1.tex}
-\input{parts/ch2.tex}
-\input{parts/ch3.tex}
-\input{parts/ch4.tex}
-\input{parts/ch5.tex}
-\input{parts/ch6.tex}
-\input{parts/ch7.tex}
-\input{parts/ch8.tex}
-}
+\documentclass[titlepage]{report}
 
-\input{./_skeleton.tex}
+\includeonly{parts/ch3.tex}
+
+\input{parts/preamble.tex}
+
+
+\begin{document}
+\input{parts/titlepage.tex}
+
+
+\begin{leanhidden}
+    import Qpf.Macro
+
+    namespace Thesis
+\end{leanhidden}
+
+
+%
+%   TEXT
+%
+
+\include{parts/ch1.tex}
+\include{parts/ch2.tex}
+\include{parts/ch3.tex}
+\include{parts/ch4.tex}
+\include{parts/ch5.tex}
+\include{parts/ch6.tex}
+\include{parts/ch7.tex}
+\include{parts/ch8.tex}
+
+
+
+\begin{leanhidden}
+    end Thesis
+\end{leanhidden}
+
+
+
+\bibliographystyle{ieeetr}
+\bibliography{MScThesis}
+
+\end{document}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "test"
+%%% End: 
