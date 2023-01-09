@@ -1,23 +1,4 @@
-\documentclass[titlepage]{report}
-
-\input{parts/preamble.tex}
-
-
-\begin{document}
-\input{parts/titlepage.tex}
-
-
-\begin{leanhidden}
-    import Qpf.Macro
-
-    namespace Thesis
-\end{leanhidden}
-
-
-%
-%   TEXT
-%
-
+\newcommand{\thesistext}{
 \input{parts/ch1.tex}
 \input{parts/ch2.tex}
 \input{parts/ch3.tex}
@@ -26,23 +7,6 @@
 \input{parts/ch6.tex}
 \input{parts/ch7.tex}
 \input{parts/ch8.tex}
+}
 
-
-
-\begin{leanhidden}
-    end Thesis
-\end{leanhidden}
-
-
-
-\bibliographystyle{ieeetr}
-\bibliography{MScThesis}
-
-\end{document}
-
-
-
-%%% Local Variables: 
-%%% mode: latex
-%%% TeX-master: "test"
-%%% End: 
+\input{./_skeleton.tex}
