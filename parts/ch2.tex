@@ -14,6 +14,10 @@ We will assume as little background knowledge as possible, yet, some (minimal) e
     \cite{avigadTheoremProvingLean,christiansenFunctionalProgrammingLean}.
 \end{remark}
 
+In the interest of consistency, we will be using Lean 4 syntax and naming conventions, even in our
+current discussion of the general theory and formalizations as presented by Avigad \etal. (in Lean 3).
+The changes made to definitions in this chapter are purely superficial.
+
 
 
 The encoding of types as QPFs relies on a key observation; a lot of types are functorial in nature.
@@ -85,28 +89,51 @@ Together, a type function \leanm{F : Type u → Type v} and a mapping operation 
 \lean{List α} is an example of a functor, but so are, e.g., products (\lean{α × β}) and sums 
 (\lean{α ⊕ β}).
 
-A function \lean{f : F α → α}, for some fixed type \lean{α}, is called an \emph{\lean{F}-algebra}; inductive types correspond to an \emph{initial} such algebra. To clarify, an \lean{F}-algebra \lean{f} is initial, if for every \lean{F}-algebra \lean{g} there is exactly one arrow \lean{rec} that makes the square of \cref{fig:initial_alg_square} commute.
-\begin{figure}[h]
-\begin{todo}
-    initial algebra commuting square
-\end{todo}
+A function \lean{f : F α → α}, for some fixed \emph{carrier} type \lean{α}, is called an \emph{\lean{F}-algebra}; inductive types correspond to the carrier of an \emph{initial} such algebra. To clarify, an \lean{F}-algebra \lean{f} is initial, if for every \lean{F}-algebra \lean{g : F(β) → β} there is exactly one arrow $\lean{rec} : α → β$ that makes the left square of \cref{fig:initial_alg_square} commute.
+\begin{figure}[ht]
+    \begin{center}
+% https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRADEAKAHW8bQAWdAJQgAvqXSZc+QijIAmKrUYs2vfkPGSQGbHgJEF5ZfWatEHHtwBGMHCO1T9so6SXUzay7zsPxyjBQAObwRKAAZgBOEAC2SGQgOBBIAIzUDHR2DAAK0gZyIFFYwQI4IJ6qFiARTjUx8YiJyUjGKuZsXLw4MAAeOAPAUTAAxmKiEpENrdQtiADMlR2WwRUgmdl5LoaWDDAR5ZP1cWmzKQtL3iDdfQM4Q6NiAWJAA
+   % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRADEAKAHW8bQAWdAJQgAvqXSZc+QijIAmKrUYs2vfkPGSQGbHgJEF5ZfWatEHHtwBGMHCO1T9so6SXUzay7zsOnutIGcsgArCaeqhZWGgyCjhLOMoYo4R4q5up8cVqJgS4pyADsERneMbb2CTp6ySEl6V7RvlXiyjBQAObwRKAAZgBOEAC2SGQgOBBIAIzUDHR2DAAKQa6WA1idAjggkZmWfQGDI2PUk0jGZdFcvDgwAB44T8ADMADGYqJ5x6OIl+eIADMe3KnV2IHmixWBTkEJgfR23yGv1mEymQJBzW4d0ez1eHyOyKQ4TRSAALJi2G9wZCYMtVik4QjCSdEAA2M7oilXNg3bEPJ44YBvCD4z4s34lUnsymWKASpBSgEkppZHGC4Wi95iNpiIA
+\begin{tikzcd}
+    F(\alpha) \arrow[dd, "f"'] \arrow[rr, "F(\texttt{rec})"] &  & F(\beta) \arrow[dd, "g"] &  &  & F(\alpha)              &  & F(\beta) \arrow[ll, "F(\texttt{corec})"]           \\
+                                                             &  &                          &  &  &                        &  &                                                    \\
+    \alpha \arrow[rr, "\texttt{rec}"]                        &  & \beta                    &  &  & \alpha \arrow[uu, "c"] &  & \beta \arrow[uu, "d"] \arrow[ll, "\texttt{corec}"]
+    \end{tikzcd}       
+\end{center}
 
-\caption{Commuting square for initial $F$-algebras $f : F(α) → α$}
+\caption{Commuting square for initial $F$-algebras $f$ and final $F$-coalgebras $c$}%
 \label{fig:initial_alg_square}
 \end{figure}
 
+
 Consider the type of natural numbers, \lean{Nat}; we'll show that the constructors for \lean{Nat} 
-Consider a functor ${F_{nat}(α) = \lean{Unit} \mathop{⊕} α}$, where \lean{Unit} is the unit type --- with \lean{unit} as its sole inhabitant --- and \lean{⊕} denotes a sum (disjoint union). On functions $f : α → β$, the obvious choice of mapping operation $F(f) : F(α) → F(β)$ is such that $F(f)(\lean{unit}) = \lean{unit}$ and $F(f)(a) = f(a)$ for all $a : α$.
+constitute an initial algebra for functor the ${F_{nat}(α) = \lean{Unit} \mathop{⊕} α}$, where \lean{Unit} is the unit type with \lean{(unit : Unit)} as its sole inhabitant and \lean{⊕} denotes a sum (disjoint union). On functions $f : α → β$, the obvious choice of mapping operation $F(f) : F(α) → F(β)$ is such that $F(f)(\lean{unit}) = \lean{unit}$ and $F(f)(a) = f(a)$ for all $a : α$.
 
-Natural numbers are defined by the constant $0 ∈ \mathbb{N}$ and the function $succ : \mathbb{N} → \mathbb{N}$. Together, these constructors give an algebra $f : F_{nat}(\mathbb{N}) → \mathbb{N}$. 
+Natural numbers are defined by a constant $0 : \lean{Nat}$ and a function $succ : \lean{Nat} → \lean{Nat}$.
+Let $f : F_{nat}(\lean{Nat}) → \lean{Nat}$ be the $F$-algebra defined as $f(\lean{unit}) = 0$ and $f(i) = succ(i)$ for all $i : \lean{Nat}$.
 
-Let $g : F_{nat}(α) → α$ be an arbitrary $F$-algebra, and define a function $\mathrm{rec} : \mathbb{N} → α$ such that $\mathrm{rec}(0) = g(\lean{unit})$ and  $\mathrm{rec}(n+1) = \mathrm{rec}(g(n))$, for every $n ∈ \mathbb{N}$.
-
+Then, let $g : F_{nat}(α) → α$ be an arbitrary $F$-algebra, and define a function $\mathrm{rec} : \mathbb{N} → α$ such that $\mathrm{rec}(0) = g(\lean{unit})$ and  $\mathrm{rec}(n+1) = \mathrm{rec}(g(n))$, for every $n ∈ \mathbb{N}$.
 The inductive properties of \lean{Nat} are exactly what makes this algebra initial.
 
-Dually, there is a connection between coinductive types and final coalgebras.
+
+Conversely, initial algebras are unique up-to isomorphism, so any other initial $F_{{nat}}$-algebra $h: F_{{nat}}(β) → β$
+is equivalent to $f$ and its carrier, $β$, is equivalent to \lean{Nat}.
+
+
+Dually, there is a connection between coinductive types and \emph{final coalgebras}.
+More concretely, a $F$-coalgebra is a function $c : α → F(α)$, with $α$ again an arbitrary carrier type,
+The coalgebra $c$ is \emph{final} if for every other $F$-coalgebra $d : β → F(β)$ there is a unique arrow
+$\lean{corec: β → α}$ that makes the right square of \cref{fig:initial_alg_square} commute.
+Finally, the carrier of a final coalgebra corresponds to a coinductive type.
+
+
+Alternatively, we know that $α$ is the carrier of an initial $F$-algebra (resp. final $F$-coalgebra) and
+thus corresponds to an inductive (resp. coinductive) type iff it is the least (resp. greatest) 
+fixpoint of $F$. We will also call these the \emph{fixpoint}, resp. \emph{cofixpoint}, of $F$.
+
+
+
 Not all functors, though, have initial algebras, or final coalgebras.
-% And, it is not, in general, easy to construct such (co)algebras.
 
 
 \section{Polynomial functors}
@@ -161,7 +188,7 @@ The \emph{W-type} of a polynomial functor \lean{P} is the type of exactly such t
     | mk (a : P.A) (f : P.B a → W P) : W P
 \end{leancode}
 
-By construction, the W-type is the initial algebra of \lean{P}.
+By construction, the W-type of $P$ is its fixpoint, with \lean{W.mk} its initial algebra.
 
 It is important to make a distinction between types that \emph{are} polynomial functor, and types that are (equivalent to) W-types \emph{of} polynomial functors. 
 For example, \lean{Nat} is not a polynomial functor, but it \emph{is} the W-type of a polynomial functor (namely, \lean{F$_\lean{nat}$}). 
@@ -177,38 +204,32 @@ An \emph{M-type} of a polynomial functor \lean{P} is the type of potentially inf
 An \emph{approximation} of an M-type up to depth $n$ is the type of such trees of height at most $n$, where any required subtrees at depth $n+1$ are replaced with a special ``continue'' leaf. 
 
 \begin{leancode}
-  inductive MApprox (P : PFunctor) : Nat → Type u
-  | continu : MApprox 0
-  | intro {n} : (a : P.A) → (P.B a → MAprrox P n) → MAprrox P (succ n)
+  /-- `CofixA P n` is an `n` level approximation of a M-type -/
+  inductive CofixA (P : PFunctor) : Nat → Type u
+  | continu : CofixA 0
+  | intro {n} : (a : P.A) → (P.B a → CofixA P n) → CofixA P (succ n)
 \end{leancode}
 
 Then, we define what it means for approximations \emph{agree} --- either the first approximation must be a ``continue'' leaf, or both approximations have nodes of the same kind as root, and the corresponding subtrees recursively agree --- whence an M-type is just an infinite series of approximations of increasing depth where every approximation agrees with the next.
 
 \begin{leancode}
-  inductive Agree : ∀ {n : Nat}, MApprox P n → MApprox P (n + 1) → Prop
-  | continu (x : MApprox P 0) (y : MApprox P 1) : Agree x y
-  | intro {n} {a}   (x  : F.B a → MApprox P n) 
-                    (x' : F.B a → MApprox P (n + 1)) 
+  inductive Agree : ∀ {n : Nat}, CofixA P n → CofixA P (n + 1) → Prop
+  | continu (x : CofixA P 0) (y : CofixA P 1) : Agree x y
+  | intro {n} {a}   (x  : F.B a → CofixA P n) 
+                    (x' : F.B a → CofixA P (n + 1)) 
                     : (∀ i : F.B a, Agree (x i) (x' i))
-                    → Agree (MApprox.intro a x) (MApprox.intro a x')
+                    → Agree (CofixA.intro a x) (CofixA.intro a x')
 
-  structure M := 
-    (approx : ∀ n, MApprox P n) (consistent : ∀ n, Agree (approx n) (approx (n+1)))
+  structure M (P : PFunctor) := 
+    (approx : ∀ n, CofixA P n)
+    (consistent : ∀ n, Agree (approx n) (approx (n+1)))
 \end{leancode}
 
-The M-type of a polynomial functor is, by construction, its final coalgebra.
-
-\begin{todo}
-    % \subsection*{Fixpoints}      
-
-    Clarify fixpoints?
-
-    Recall that (co)inductive types are represented by initial algebras and final coalgebras. The M and W-types of a polynomial functor are exactly such (co)algebras. Thus, defining a polynomial functor also defines a freely generated inductive and coinductive type.
-
-\end{todo}
+The M-type of a polynomial functor is, by construction, its cofixpoint.
 
 \section{Quotients}
-Lean does not just have \inductive{} types, it also supports quotients of types. For example, it is common to define a multiset as the quotient of lists through the relation that equates lists up to permutation.
+As mentioned in the introduction, Lean also supports quotients of types.
+Recall the example of multisets, defined as a quotient on lists.
 
 %LEANIGNORE
 \begin{leancode}
@@ -218,24 +239,26 @@ Lean does not just have \inductive{} types, it also supports quotients of types.
     def Multiset α := Quot (@List.perm α)
 \end{leancode}
 
-This presents a problem, since quotients cannot be represented by just polynomial functors. Thus, generalize to \emph{quotients} of polynomial functors.
+Polynomial functors cannot represent such quotients. Thus, we generalize to \emph{quotients} of polynomial functors, QPFs.
 
-Intuitively, a functor \lean{F} is the quotient of some polynomial functor \lean{P} when, for every \lean{α}, there is a surjective \emph{natural transformation} \lean{abs} from \lean{P.Obj α} to \lean{F α}. We can think of \lean{abs} as mapping abstract objects in \lean{F α} to their concrete representations in \lean{P.Obj α}.
+Intuitively, a functor $F$ is the quotient of some polynomial functor $P$ when, there is a surjective \emph{natural transformation} \lean{abs} from $P$ to $F$. We can think of \lean{abs$_{α}$} as mapping abstract objects in $F(α)$ to their concrete representations in $P(α)$, for every $α$.
+Recall that every functor is equipped with a mapping operation on functions $f : α → β$. To say that \lean{abs} is a natural transformation is to say that it respects this functorial structure. That is to say, the square of \cref{fig:nat_transform_square} should commute for all arrows $f : α → β$.
+\begin{figure}[]
+    \begin{center}
+        % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRAAUAKAHW8bQAWdAJQgAvqXSZc+QijIAmKrUYs2AMR58GgkeMkgM2PASILyy+s1aIOWgEYwceiVOOyzpJdStrbm3kdnUVdDaRM5ZAAWCx9VGxBefiF9NxlTFAA2WJVrNkCnOnFlGCgAc3giUAAzACcIAFskMhAcCCQARji82zp7OAB9JJ0U0LrG5uo2pHNcvztqkINxpsRZ6cQAZm75vsGC51SQFc6p9q2dhM1Fo5PEGNbzgFZLtmrisSA
+\begin{tikzcd}
+    P(\alpha) \arrow[dd, "abs_\alpha"] \arrow[rr, "P(f)"] &  & P(\beta) \arrow[dd, "abs_\beta"] &  & \alpha \arrow[rr, "f"] &  & \beta \\
+                                                          &  &                                  &  &                        &  &       \\
+    F(\alpha) \arrow[rr, "F(f)"]                          &  & F(\beta)                         &  &                        &  &      
+    \end{tikzcd}
+    \end{center}
 
-Recall that every functor \lean{F} is equipped with a mapping operation \lean{map} on functions \lean{f : α → β}. To say that \lean{abs} is a natural transformation is to say that it respects this functorial structure. That is to say, the following square should commute:
-\begin{todo}
-    Commuting square: (see .tex source)
+    \caption{Commuting square for natural transformation $abs : P ⟹ F$}%
+    \label{fig:nat_transform_square}
+\end{figure}
 
-    P α -- P.map f --> P β
-     |                  |
-     | abs α            | abs β
-     |                  |
-     \/                 \/
-    F α -- map\_F f --> F β 
 
-\end{todo}
-
-Formally, we can show that \lean{abs} is surjective by providing, for every \lean{α}, a function \lean{repr: F α → P.Obj α} and proving that it is a right-inverse.
+Formally, we can show that \lean{abs} is surjective by providing, for every $α$, a function $\lean{repr}: F(α) → P(α)$ and proving that it is a right-inverse.
 This is specified in Lean with the \lean{QPF} typeclass.
 \begin{leancode}
   class Qpf (F : Type → Type) [Functor F] where
@@ -246,39 +269,17 @@ This is specified in Lean with the \lean{QPF} typeclass.
     abs_map  : ∀ {α β} (f : α → β) (p : P.Obj α), 
                     abs (f <$> p) = f <$> abs p
 \end{leancode}
-Where \lean{f <\$> x} is Lean syntax for applying \lean{map$_\texttt{G}$ f} to \lean{x} --- the functor \lean{G} is inferred from the type of \lean{x}.
+Where \lean{f <\$> x} is Lean syntax for applying \lean{map$_\texttt{G}$ f} to \lean{x} --- the functor \lean{G} is inferred from the type of \lean{x}, \lean{abs\_repr} shows that \lean{repr} is a right-inverse of \lean{abs}, and
+\lean{abs\_map} is the naturality condition of \lean{abs}.
 
 
-\subsection*{Compositionality}
 
-This thesis is mostly focussed on (co)datatypes, we don't provide any facilities to help with defining QPF-based quotient types. 
-Still, we do maintain full compositionality, even more so than Lean's native notions of \inductive{} and quotient types.
-
-For example, recall the \lean{Multiset} quotient type. One might want to use it to define the type of well-founded, unordered trees.
-\begin{badleancode}
-  inductive UnorderedTree α
-  | node : α → Multiset (UnorderedTree α) → UnorderedTree α
-\end{badleancode}
-
-Lean rejects this; it is not allowed to nest recursive occurences of \lean{UnorderedTree} behind a quotient type.
-
-On the other hand, if we (manually) define \lean{Multiset} as a QPF with the same semantics, then we can freely compose it in (co)datatype specifications.
-\begin{leancode}
-  data UnorderedTree α
-  | node : α → Multiset (UnorderedTree α) → UnorderedTree α
-\end{leancode}
-
-
-\begin{todo}
-    \begin{itemize}
-        \item Multiset example
-        \item Impossible with pfunctor
-        \item Show QPF definition (univariate, without universes)
-        \item Note that we don't specifically look at quotients in the rest of the thesis, but we do do \data{} and \codata{} constructions as QPFs, which compose well. Still, the current implementation breaks when trying to use quotients. (reference limitations section)
-    \end{itemize}
-\end{todo}
-
-
+\subsection*{Fixpoint and Cofixpoint}
+Crucially, every QPF still has an initial algebra; if $F$ is the quotient of some polynomial functor
+$P$, then the least fixed point of $F$ can be constructed as a quotient of $P$'s W-type over a suitable
+relation.
+Similarly, the greatest fixed point (thus, the final coalgebra) of a QPF $F$ can be constructed as
+a quotient of $P$'s M-type.
 
 
 
@@ -358,7 +359,7 @@ Suppose that \lean{Sum'} is the uncurried version of sums, then we would write \
 Thus, if \lean{f₁ : α₁ → β₁} and \lean{f₂ : α₂ → β₂}, then \lean{Sum'.map ![f₁, f₂]} yields a function from \lean{Sum' ![α₁, α₂]} to \lean{Sum' ![β₁, β₂]}.
 The functoriality constraints have an obvious generalization to the multivariate case.
 
-\subsection{Multivariate Polynomial Functors}
+\subsection*{Multivariate Polynomial Functors}
 An $n$-ary, polynomial functor is still defined with a shape $A$ as before, but the content now maps $a ∈ A$ not to a single type, but to a vector of $n$ types.
 
 \begin{leancode}
@@ -379,16 +380,27 @@ The generalization proceeds relatively straightforwardly.
 Where \lean{TypeVec.comp} is the pointwise composition of two vectors of functions.
 
 \begin{remark}
-    Implicit variables are not limited to types, we will use \lean{n} and \lean{m} for natural numbers and \lean{v₀, v₁, ...} for type vectors.
+    Implicit variables are not limited to types, we will use \lean{n} and \lean{m} for natural numbers and \lean{v,v₀, v₁, ...} for type vectors.
 \end{remark}
 
 The generalization of M and W-types to the multivariate case is left as an exercise for the reader.
 
-\subsection{Multivariate QPFs}
+\subsection*{Multivariate QPFs}
+The definition of multivariate QPFs is not very different from the univariate case, we merely replace
+(polynomial) functors with multivariate (polynomial) functors.
 
-\begin{todo}
-    List the full definition of MvQpf with universes
-\end{todo}
+\begin{leancode}
+  class MvQpf {n : ℕ} (F : TypeFun.{u,_} n) [MvFunctor F]  where
+    P         : MvPFunctor.{u} n
+    abs       : ∀ {v}, P.Obj v → F v
+    repr      : ∀ {v}, F v → P.Obj v
+    abs_repr  : ∀ {v} (x : F v), abs (repr x) = x
+    abs_map   : ∀ {v₀ v₁} (f : v₀ ⟹ v₁) (p : P.Obj v₀), 
+                    abs (f <$$> p) = f <$$> abs p
+\end{leancode}
+
+Where \lean{f <\$\$> p} is the multivariate analogue of \lean{f <\$> p}, i.e., applying 
+\lean{(F.map f)} to \lean{p}.
 
 
 \section{Inductive Families}
