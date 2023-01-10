@@ -2,32 +2,31 @@
 \chapter{Porting the QPF formalization from Lean3 to Lean4}%
 \label{ch:porting}
 
-Lean is primarily developed by Leonardo de Moura \etal{} at Microsoft Research~\cite{demouraLeanTheoremProver2015, avigadTheoremProvingLean}. As an in-progress research project, it explicitly provides no stability guarantees, and as a result, Lean 4 is backwards incompatible with Lean 3.
+Lean is primarily developed by Leonardo de Moura \etal{} at Microsoft Research~\cite{demouraLeanTheoremProver2015, avigadTheoremProvingLean}. As an in-progress research project, the team explicitly provides no stability guarantees. Indeed, Lean 4 is backwards incompatible with Lean 3.
 This means that the QPF formalizations by Avigad et al. \etal{}
 (\cite{avigadDataTypesQuotients2019a}) were not directly usable. The current chapter details my efforts to port these formalizations to Lean 4.
 
 
 
-Lean 3 has a comprehensive, community-maintained mathematics library, Mathlib (\cite{themathlibcommunityLeanMathematicalLibrary2020}), 
+Lean 3 has a comprehensive, community-maintained mathematics library, mathlib (\cite{themathlibcommunityLeanMathematicalLibrary2020}), 
 which also functions as its unofficial, de-facto standard library.
-Mathlib4 is the port of this library to Lean 4 (\cite{mathlib4}),
+mathlib4 is the port of this library to Lean 4 (\cite{mathlib4}),
 but large parts were still missing at the time I started my thesis project.
-In particular, Avigad \etal{} contributed their formalizations to Mathlib, but these were far from
+In particular, Avigad \etal{} contributed their formalizations to mathlib, but these were far from
 being ported.
 
 
 
 \subsection*{Upstreaming}
 It should be noted that at the time, the maintainers of mathlib4 were not yet interested in 
-community-ported files. This has since changed and I am currently also in the process of
-contributing my porting work to Mathlib4, making it more widely available.
+community-ported files. This has since changed and I am currently in the process of
+contributing my porting work back to mathlib4, making it more widely available.
 
 
 
 
 \section{Mathport and Changes from Lean 3}
 Lean 4 is not just a new version of the language, most of the code base has been rewritten.
-
 There were some changes in the syntax and naming convention, but most importantly, 
 the metaprogramming in Lean 4 has been completely reworked.
 
@@ -36,9 +35,8 @@ To help with porting code, the mathlib community developed the mathport tool (\c
 syntax and naming changes, but the translation is far from perfect.
 In particular, mathport did reasonably well in translating declaration signatures, 
 but proofs did not translate well.
-
 This is primarily because mathport intentionally does not deal with metaprogramming code, and a lot
-of tactics (proof automation meta-programs) provided by Mathlib were still missing from Mathlib4.
+of tactics (proof automation meta-programs) provided by mathlib were still missing from mathlib4.
 
 
 \section{Implicit arguments and other inference}
@@ -64,8 +62,8 @@ For example, in the following theorem Lean 4 couldn't figure out the right types
 \end{leancode}
 
 Similarly, Lean does inference sligthly different for so called \emph{eliminators}.
-Lean 3 (and more recent versions of Lean 4) have a \leanm{@[elab_as_eliminator]} attribute on user-defined
-functions that instructs Lean to use the specialized eliminator inference, but the version we're using
+Lean 3 (and more recent versions of Lean 4) support an \leanm{@[elab_as_eliminator]} attribute on user-defined
+functions that instructs Lean to use this specialized eliminator inference, but the version we're using
 does not have that.
 
 This came up, e.g., in the proof of \lean{Cofix.bisim\_aux}. The Lean 3 proof simply used
@@ -98,9 +96,9 @@ However, there were quite a few, and implementing them would probably have taken
 Instead, proofs that used such missing tactics were changed to use the lower-level tactics that were
 available, making these proofs a bit longer and more verbose.
 
-Notably, Mathlib4 has made much progress in implementing more tactics since, 
-so presumably I can change most of these proofs back to use the higher-level tactics when
-making the changes needed to contribute them back to Mathlib4.
+Notably, mathlib4 has made much progress in implementing more tactics since, 
+so presumably these proofs can be changed back to use the higher-level tactics when
+making the contribution back to mathlib4.
 
 
 
