@@ -1,34 +1,106 @@
 
-\chapter{Porting the QPF formalization from Lean3 to Lean4}
+\chapter{Porting the QPF formalization from Lean3 to Lean4}%
 \label{ch:porting}
 
-Lean is primarily developed by Leonardo de Moura at Microsoft Research. As an in-progress research project, it explicitly provides no stability guarantees, and indeed, Lean 4 is not backwards compatible with Lean 3.
-This means that the QPF formalizations by Avigad et al.
-% \etal{}
-(\cite{avigadDataTypesQuotients2019a}) are not directly usable. The current chapter details my efforts to port these formalizations to Lean 4.
-
-
-Lean Mathlib is a 
+Lean is primarily developed by Leonardo de Moura \etal{} at Microsoft Research.~\cite{demouraLeanTheoremProver2015, avigadTheoremProvingLean} As an in-progress research project, it explicitly provides no stability guarantees, and as a result, Lean 4 is backwards incompatible with Lean 3.
+This means that the QPF formalizations by Avigad et al. \etal{}
+(\cite{avigadDataTypesQuotients2019a}) were not directly usable. The current chapter details my efforts to port these formalizations to Lean 4.
 
 
 
+Lean 3 has a comprehensive, community-maintained mathematics library, Mathlib (\cite{themathlibcommunityLeanMathematicalLibrary2020}), 
+which also functions as its unofficial, de-facto standard library.
+Mathlib4 is the port of this library to Lean 4 (\cite{mathlib4}),
+but large parts were still missing at the time I started my thesis project.
+In particular, Avigad \etal{} contributed their formalizations to Mathlib, but these were far from
+being ported.
 
 
-\begin{todo}
-    Porting
-    \begin{itemize}
-        \item Mention Lean3 -> Lean4 differences (instability)
-        \item Mention mathlib3 -> mathlib4 (mention that qpfs are part of mathlib3)
-        \item Mathport 
-                \begin{itemize}
-                    \item Takes care of syntactic differences, different naming conventions (mostly)
-                    \item Proofs did not translate well (a lot of tactics were missing)
-                \end{itemize}
-        \item \url{https://leanprover.zulipchat.com/#narrow/stream/287929-mathlib4/topic/mathport.3A.20cases_on.20.3D.3E.20casesOn}
-            \begin{itemize}
-                \item Implicit \lean{motive} arguments were being inferred differently
-                \item \lean{set\_option pp.analyze true}
-                \item Fix: be more explicit with arguments and type ascription
-            \end{itemize}
-    \end{itemize}
-\end{todo}
+
+\subsection*{Upstreaming}
+It should be noted that at the time, the maintainers of mathlib4 were not yet interested in 
+community-ported files. This has since changed and I am currently also in the process of
+contributing my porting work to Mathlib4, making it more widely available.
+
+
+
+
+\section{Mathport and Changes from Lean 3}
+Lean 4 is not just a new version of the language, most of the code base has been rewritten.
+
+There were some changes in the syntax and naming convention, but most importantly, 
+the metaprogramming in Lean 4 has been completely reworked.
+
+To help with porting code, the mathlib community developed the mathport tool (\cite{mathport}), which 
+(best-effort) translates Lean 3 source code into Lean 4 source code. This takes care of superficial 
+syntax and naming changes, but the translation is far from perfect.
+In particular, mathport did reasonably well in translating declaration signatures, 
+but proofs did not translate well.
+
+This is primarily because mathport intentionally does not deal with metaprogramming code, and a lot
+of tactics (proof automation meta-programs) provided by Mathlib were still missing from Mathlib4.
+
+
+\section{Implicit arguments and other inference}
+Lean relies heavily on automated inference to reduce verbosity, falling back on explicitly provided
+values or annotations when inference gets things wrong.
+Lean 4 will sometimes infer something different, and cause an error.
+
+By default, the pretty printer used to show intermediate proof states and types on hover in vscode will
+omit any implicit arguments in the term, to closely resemble whatever was written in the source code.
+However, we can instruct it to be more verbose:
+\begin{leancode}
+  set_option pp.implicit true -- print implicits, or
+  set_option pp.all true      -- set all options ()
+\end{leancode}
+These work in both Lean 3 and Lean 4, so it makes it easy to do a side-by-side comparison.
+
+For example, in the following theorem Lean 4 couldn't figure out the right types for \lean{f ::: g} and 
+\lean{f' ::: g'}, so explicit type annotations, which look like \lean{(f ::: g : \_)}, had to be added.
+\begin{leancode}
+  theorem append_fun_inj {α α' : Typevec n} {β β' : Type _} 
+                         {f f' : α ⟹ α'} {g g' : β → β'} :
+  (f ::: g : (α ::: β) ⟹ _) = (f' ::: g' : (α ::: β) ⟹ _) → f = f' ∧ g = g'
+\end{leancode}
+
+Similarly, Lean does inference sligthly different for so called \emph{eliminators}.
+Lean 3 (and more recent versions of Lean 4) have a \leanm{@[elab_as_eliminator]} attribute on user-defined
+functions that instructs Lean to use the specialized eliminator inference, but the version we're using
+does not have that.
+
+This came up, e.g., in the proof of \lean{Cofix.bisim\_aux}. The Lean 3 proof simply used
+\begin{leancode}    
+  apply quot.inductionOn c
+\end{leancode}  
+Where \lean{Quot.inductionOn} is marked with \lean{elab\_as\_eliminator}.
+In Lean 4 we had to explicitly provide the \emph{motive} (which determines the induction hypothesis), 
+since it was being inferred incorrectly.
+\begin{leancode}
+  apply Quot.inductionOn (motive := fun c => ∀b, r c b → 
+                                      Quot.lift (Quot.mk r') h₁ c 
+                                      = Quot.lift (Quot.mk r') h₁ b) 
+            c
+\end{leancode}
+
+The tricky part is that the proof generally doesn't throw an error at \lean{Quot.inductionOn} when it
+infers the wrong motive; it just produces a different proof state, which trips up later tactics.
+Catching this involved stepping through both the Lean 3 and Lean 4 to find out where, exactly, the proof states
+diverged, and then explicitly providing the desired motive.
+
+This problem was thus hard to diagnose, but relatively easy to remedy.
+
+
+\section{Missing Tactics} 
+Conversely, the issue of missing tactics was easy to diagnose, but harder to fix.
+The long-term best solution would have been to implement all missing tactics.
+However, there were quite a few, and implementing them would probably have taken a long time.
+
+Instead, proofs that used such missing tactics were changed to use the lower-level tactics that were
+available, making these proofs a bit longer and more verbose.
+
+Notably, Mathlib4 has made much progress in implementing more tactics since, 
+so presumably I can change most of these proofs back to use the higher-level tactics when
+making the changes needed to contribute them back to Mathlib4.
+
+
+
