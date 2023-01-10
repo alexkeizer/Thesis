@@ -2,7 +2,7 @@
 \chapter{A procedure for synthesizing functors from a specification}
 \label{ch:procedure}
 
-This chapter will establish a procedure that transforms a specifications of a (co)datatype
+This chapter will establish a procedure that transforms a specification of a (co)datatype
 into the proper constructions on QPFs.
 It will do so in the abstract, focusing on the details of the procedure, rather than implementation
 details of the Lean meta-programming system (which will be covered in the next chapter).
@@ -64,11 +64,11 @@ of the definition. This makes them easy to translate into a polynomial functor.
 \begin{remark}
     One way to do this translation is to realize that all shape functors can be defined as a
     composition of sums and products. 
-    This is similar to what the datatype package for Isabelle/HOL does.
+    This is similar to what the datatype package for Isabelle/HOL in~\cite{traytelCategoryTheoryBased} does.
     We'll use a different, slightly more monolithic approach.
 \end{remark}
 
-Recall that polynomial functors are defined as
+Recall that (multivariate) polynomial functors are defined as
 \begin{leancode}
     structure MvPFunctor (n : Nat) :=
       (A : Type u) (B : A → TypeVec n)
@@ -101,13 +101,12 @@ What is most important is the cardinality of each type \leanm{α_c i},
 because that is what determines the number of arguments of the $i$-th type parameter are needed
 to use constructor $c$. 
 
-The concrete structure of these types is not relevant, so we'll always use \leanm{PFin2 m}, the type
+The concrete structure of these types is not relevant, so we'll always use \leanm{PFin2 m} (see \cref{sec:enhance:pfin2}), the type
 of natural numbers less than $m$, to construct a type with cardinality $m$.
 
 \begin{remark}
-    Note that \leanm{PFin2 m} is a type we defined ourselves. We prefer it over \leanm{Fin m}, a similar
-    type defined by the lean standard library, because our version is \emph{universe polymorphic}.
-    We will come back later to what this means and why it is important.
+    We could have also used \lean{PFin2} for the head type, rather than generating bespoke inductive types.
+    However, the
 \end{remark}
 
 So, we start by counting for each constructor, how many times it takes an argument of type \leanm{α_i},
@@ -242,7 +241,8 @@ To get rid of the extra variable \lean{ρ}, we simply take the fixpoint.
 
 
 
-\section{Composition pipeline}
+\section{Composition pipeline}%
+\label{sec:comp_pipeline}
 Finally, we are ready to discuss (co)datatypes that are composed of other (co)datatypes.
 
 The running example for this section will be the rose tree; leaves are labelled with \lean{α}, while
@@ -305,21 +305,19 @@ Then we can reuse the same fresh parameter \lean{σ₁} for both occurences.
 Where \lean{σ₁} stands for \lean{QpfList ρ}, as before, and \lean{σ₂} stands for 
 \lean{QpfList (QpfList ρ)}.
 
-\begin{todo}
-    Bring attention back to the initial example
-\end{todo}
 
 
-\subsection{Solving for compositions}
+\subsection{Solving for compositions}%
+\label{subsec:comp_pipeline:solving}
 
-The question remains, how do we show that \lean{F} is a QPF.
-Recall the desired definition is
+Returning to our motivating example, recall that we're aiming to define a QPF \lean{F} which satisfies:
+
 %LEANIGNORE
 \begin{leancode}
     F α β ρ = QpfTree.Shape α β ρ (QpfList ρ)
 \end{leancode}
 
-The \emph{composition pipeline} translates such an equation to a definition of \lean{F} in terms of the appropriate construction on QPF, such that: (a) \lean{F} is known to be a QPF, and (b) \lean{F α β ρ} is indeed equivalent to the desired \lean{QpfTree.Shape α β ρ (QpfList ρ)}.
+The \emph{composition pipeline} translates such an equation to a definition of \lean{F} in terms of the appropriate construction on QPF, such that: (a) \lean{F} is known to be a QPF, and (b) the desired equality indeed holds.
 
 As the name ``composition pipeline'' alludes, we are defining compositions of QPFs. Formally, \lean{MvQpf.Comp} has signature:
 \begin{center}
@@ -333,49 +331,58 @@ An $n$-ary type function \lean{F} is composed with an $n$-sized vector of $m$-ar
 \end{leancode}
 All arguments \lean{αᵢ} are broadcast to all functors \lean{Gⱼ}, meaning we don't have to worry about argument duplication or reordering.
 
-Continuing with the example, we are going to define \lean{F} as \lean{Comp QpfTree.Shape ![G₁, G₂, G₃, G₄]}, for some functors \lean{G₁}, \lean{G₂}, \lean{G₃} and \lean{G₄}, satisfying the following equations:
+Continuing with the example, we are going to define \lean{F} as \lean{Comp QpfTree.Shape ![G₁, G₂, G₃, G₄]}, for some functors \lean{G₁}, \lean{G₂}, \lean{G₃} and \lean{G₄}, satisfying the following equalities:
 \begin{leancode}
     G₁ α β ρ = α                G₃ α β ρ = ρ
     G₂ α β ρ = β                G₄ α β ρ = (QpfList ρ)
 \end{leancode}
-The first three equations are trivial, they describe projection functors. 
-The last equation betrays the recursive nature of the composition pipeline.
 
-\begin{todo}
-    Mention dead variables here, or somewhere before.
-\end{todo}
+At which point we are effectively in the same situation as before, wishing to define QPFs \lean{Gᵢ}
+that satisfy certain equalities, betraying the recursive nature of the composition pipeline.
 
-In fact, we can identify three kinds of functors:
+Before we continue, it should be clarified that the composition pipeline does not support any kind
+of equation. For example, we cannot define a QPF that satisfies
+\begin{badleancode}
+    H α β = α → β 
+\end{badleancode}
+Because the arrow type constructor \lean{(⋅ → ⋅)} is \emph{not} functorial. 
+At least, it is not functorial in both arguments. If, instead, we fix any value \lean{α} for the
+first argument, we obtain \lean{(α → ⋅)}, which \emph{is} a QPF.
+More generally, we say that in \lean{α → β}, α is a \emph{dead} variable, since it occurs as a non-functorial argument, while β is a \emph{live} variable.
+
+By default, the composition pipeline assumes arguments are live, but we can explicitly mark some as dead
+by giving a type ascription. Do note that the result is itself only functorial in the live arguments.
+\begin{leancode}
+    H (α : Type u) β = α → β 
+\end{leancode}
+That is to say, \lean{H} is not a QPF, but \lean{H a}, for arbitrary values \lean{a : α} is.
+
+
+
+
+Continuing on, the composition pipeline does support these three kinds of functors:
 \begin{itemize}
     \item \emph{Projections: } The right-hand-side of the equation is just a parameter, as in \lean{G₁ α β ρ = α}
-    \item \emph{Constants: } The rhs does not mention the (live) parameters at all, e.g., \lean{G α β = Nat} or \lean{G (x y : Type) α β = x → y}.
+    \item \emph{Constants: } The rhs does not mention the live parameters at all, e.g., \lean{G α β = Nat} or 
+                \leanm{G (n : Nat) β = PFin2 n}.
     \item \emph{Compositions: } The rhs is an application of a QPF
 \end{itemize}
 
-\begin{remark}
-    Other kind of expressions, such as dependent arrows \lean{(a : α) → ...} or anonymous functions \leanm{fun γ => ...}, are not supported. Non-dependent arrows \lean{α → β} are interpreted as the application of \lean{(α → ⋅)} to \lean{β}.
-\end{remark}
+This notably excludes dependent arrows \lean{(a : α) → \_}, anonymous functions \leanm{fun γ => _},
+and applications of non-QPFs (such as non-dependent arrows (⋅ → ⋅) in its general form).
+
+
 
 Projections are trivial to identify, and for constants we only have to verify that the target expression contains none of the live parameters. 
-
 In all other cases, we try to find the largest expression \lean{G}, such that \lean{G} is a $k$-ary QPF, for some $k$, and we can write the target equation as
 \lean{F ... = G e₁ ... eₖ}.
 If no such \lean{G} exists, it means the original equation was not valid.
 
 
-Then, we recursively call the composition pipeline, each time defining a new functor \lean{Hᵢ ... = eᵢ}, where \lean{Hᵢ} takes the same parameter as the original desired functor \lean{F}.
+Then, we recursively call the composition pipeline, each time defining a new functor \lean{Hᵢ ... = eᵢ}, where \lean{Hᵢ} takes the same parameters as the original desired functor \lean{F}.
 
 Finally, \lean{F} can simply be defined as the composition of \lean{G} with \lean{![H₁, ..., Hₘ]}.
 
-
-
-
-\section{Universe considerations}
-\begin{todo}
-    Explain universe polymorphism (i.e., why PFin2).
-
-    Explain why HeadT is not universe polymorphic yet (bug in our version of lean)
-\end{todo}
 
 
 \section{A final example}

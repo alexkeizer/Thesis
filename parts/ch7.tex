@@ -32,7 +32,7 @@ The \inductive{} analogue of this definition \emph{is} polymorphic, but because 
   
 
 The solution is fairly simple, we can explicitly state that we want \lean{HeadT} to be polymorphic
---- recall that the child family of types is universe polymorphic because of the use of \lean{PFin2} (see \ref{sec:shape_types, sec:enhance:pfin2})
+--- recall that the child family of types is universe polymorphic because of the use of \lean{PFin2} (see~\cref{sec:shape_types,sec:enhance:pfin2})
 \begin{badleancode}
 
   inductive HeadT : Type u
@@ -46,6 +46,20 @@ which causes it to reject the above.
 This bug is already fixed in more recent versions of Lean, 
 so this limitation should be relatively easy to resolve.
 
+
+
+\section{Dead variables}
+In \cref{subsec:comp_pipeline:solving} we briefly mentioned the difference between dead and live
+variables in the context of the composition pipeline. However, the implementation of \data{} and \codata{}
+currently does not quite deal with dead variables appropriately yet. 
+For example, the following datatype should be accepted, but isn't yet.
+
+\begin{badleancode}
+
+  data Arrow (α : Type _) β where
+    | mk : (α → β) → Arrow α β
+
+\end{badleancode}
 
 
 \section{Constructors and Characteristic Theorems}
