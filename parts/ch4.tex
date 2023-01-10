@@ -4,10 +4,9 @@
 \label{ch:enhancing}
 
 
-In the preceding chapter we presented the formalization of QPFs as made by Avigad \etal{}
-In the process of porting the code from Lean3 to Lean4, various enhancements were identified, and indeed implemented. 
-
-These chapter serves to elaborate on these changes to the existing behaviour which are too big to be considered just porting, but don't fall strictly under (co)datatype synthesis and metaprogramming parts of the project.
+In the preceding chapter we discussed how to port the formalization of QPFs from Lean3 to Lean4.
+In this process, I identified, and ineed implemented various enhancements. 
+This chapter serves to elaborate on those changes which are too big to be considered just porting, but don't fall strictly under (co)datatype synthesis and metaprogramming parts of the project.
 
 
 
@@ -17,7 +16,7 @@ These chapter serves to elaborate on these changes to the existing behaviour whi
 \section{Functions \& Currying}
 Like most functional languages, in Lean it is idiomatic to write functions in their curried form, 
 so \leanm{f : Type → Type → Type}, rather than \leanm{f : (Type × Type) → Type}.
-However, the formalizations are done in terms of uncurried type functions.
+However, the formalizations are done in terms of vectors of types and uncurried type functions.
 
 %LEAN namespace Hidden -- hide definition, so it does not interfere
 \begin{leancode}
@@ -25,7 +24,6 @@ However, the formalizations are done in terms of uncurried type functions.
       := TypeVec n → Type v
 \end{leancode}
 %LEAN end Hidden
-
 Which is a function that takes a list of exactly $n$ types, and returns a type --- the \lean{u} and
 \lean{v} refer to the respective universes that these types live in, and betray a technical limitation
 of this encoding: all arguments to a \leanm{TypeFun} must live in the same universe.
@@ -69,8 +67,8 @@ For the time being, we'll satisfy ourselves with hiding these details throughs
 
 
 \section{Make MvQpf automatically assume MvFunctor}
-The following change might feel overwhelmingly underwhelming, but it presents a considerably quality 
-of life improvement for the \leanm{MvQpf} typeclass. Originally, the latter was defined as
+The following change might feel underwhelming, but it presents a considerably quality 
+of life improvement for the \leanm{MvQpf} typeclass. The latter was originally defined as
 %LEANIGNORE
 \begin{leancode}
     class MvQpf {n : Nat} (F : TypeFun n) [MvFunctor F] where
@@ -90,8 +88,18 @@ For example, if we wish to formalize ``Let \lean{F} be an $n$-ary QPF'', we woul
     variable (F : TypeFun n) [MvQpf F]
 \end{leancode}
 
-With the new definition this works, but under the old definition we would have to explictly require the \lean{MvFunctor F} instance as well. 
-Even worse, in some situations different mentions of \lean{MvQpf F} might infer different \lean{MvFunctor F} instances, causing surprising type mismatches. Under the new definition, \lean{MvQpf F} has no further implicit arguments (the value for \lean{n} is fixed by \lean{F}), and such situations can no longer occur.
+This doesn't work, we have to assume a \lean{[MvFunctor F]} bound as well.
+Even worse, in some situations different mentions of \lean{MvQpf F} could infer different \lean{MvFunctor F} instances for the implicit argument, causing surprising type mismatches.
+
+So, the definition was changed to 
+\begin{leancode}
+    class MvQpf {n : Nat} (F : TypeFun n) extends MvFunctor F where
+        -- ...
+\end{leancode}
+
+Which roughly means that the \lean{MvFunctor F} instance becomes one of the fields of the \lean{MvQpf}
+typeclass. Hence, \lean{MvQpf F} has no more implicit arguments (the value for \lean{n} is fixed by \lean{F}), 
+which fixes these issues.
 
 
 \section{Type class inference for vectors}
@@ -131,6 +139,7 @@ For the base case $n=0$, the vector \lean{G} is empty, and its vacuous to say al
 %LEANIGNORE
 \begin{leancode}
     instance instNil    (G : Vec (TypeFun m) 0) : VecMvQpf G
+        := /* ... */
 \end{leancode}
 
 For $n+1$, we recurse in the \lean{succ} typeclass variable.
@@ -141,6 +150,7 @@ For $n+1$, we recurse in the \lean{succ} typeclass variable.
                         [zero : MvQpf (G .fz)]
                         [succ : VecMvQpf (fun i => G i.fs)] : 
                             VecMvQpf G 
+        := /* ... */
 \end{leancode}
 
 There is no need to write typeclass variables in terms of \lean{VecMvQpf} because of the following instance.
@@ -150,8 +160,18 @@ There is no need to write typeclass variables in terms of \lean{VecMvQpf} becaus
         ∀i, MvQpf (G i)
 \end{leancode}
 
-Note that writing \lean{instNil} and \lean{instSucc} in terms of universally qualified \lean{MvQpf} does not work.
-It seems that Leans inference engine puts a limit on recursion depth when trying to infer a universally quantified typeclass problem, whereas it will recurse deeper for \lean{VecMvQpf}.
+Note that we could write \lean{instNil} and \lean{instSucc} directly in terms \lean{MvQpf}, e.g.,
+%LEANIGNORE
+\begin{leancode}
+    instance instSucc'  (G : Vec (TypeFun m) (n + 1)) 
+                        [zero : MvQpf (G .fz)]
+                        [succ : ∀ i, G i.fs] : 
+                            ∀ i, G i 
+        := /* ... */
+\end{leancode}
+This is accepted, but won't actually help to derive instances for larger vectors \lean{G}.
+It seems that Lean puts a limit on recursion depth when trying to infer a universally quantified 
+typeclass problem, whereas it will recurse deeper for \lean{VecMvQpf}.
 
 
 
