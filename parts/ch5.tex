@@ -291,7 +291,8 @@ The proof that these two functions are indeed inverses is a straightforward mix 
 
 
 
-\section{Recursive and corecursive types}
+\section{Recursive and corecursive types}%
+\label{sec:rec_types}
 If a type is recursive, but otherwise does not mention other types it is not strictly a shape type,
 but we can transform it into one.
 Namely, by adding an extra type parameter \lean{ρ} and substituting \lean{ρ} for all (co)recursive occurences of the type
@@ -337,40 +338,45 @@ But rather than taking the fixpoint, we take the \emph{cofixpoint} for a coinduc
 
 \section{Composition pipeline}%
 \label{sec:comp_pipeline}
-Finally, we are ready to discuss (co)datatypes that are composed of other (co)datatypes.
-
 The running example for this section will be the rose tree; leaves are labelled with \lean{α}, while
 internal nodes are labelled with \lean{β} and can have an finite, non-zero number of children.
 \begin{leancode}
-    data QpfTree α β
-      | leaf : α → QpfTree α β
-      | node : β → QpfTree α β → QpfList (QpfTree α β) → QpfTree α β
+  data QpfTree α β
+    | leaf : α → QpfTree α β
+    | node : β → QpfTree α β → QpfList (QpfTree α β) → QpfTree α β
 \end{leancode}
 
 The type is recursive, so we introduce the fresh parameter as before.
 \begin{leancode}
-    data QpfTree.Nonrecursive α β ρ
-      | leaf : α → QpfTree α β ρ
-      | node : β → ρ → QpfList ρ → QpfTree α β ρ
+  data QpfTree.Nonrecursive α β ρ
+    | leaf : α → QpfTree α β ρ
+    | node : β → ρ → QpfList ρ → QpfTree α β ρ
 \end{leancode}
 
-Then, we go through each argument type which is not just a parameter, and substitute
-it with a fresh parameter.
+However, the result is not quite a shape type yet, we also have to get rid of \lean{QpfList ρ} as an
+argument type. To do so, we simply introduce more parameters, while remembering which type these
+new parameters are supposed to stand for.
 
 \begin{leancode}
-    data QpfTree.Shape α β ρ σ₁
-      | leaf : α → QpfTree α β ρ σ₁
-      | node : β → ρ → σ₁ → QpfTree α β ρ σ₁
+  inductive QpfTree.Shape α β ρ σ₁
+    | leaf : α → QpfTree α β ρ σ₁
+    | node : β → ρ → σ₁ → QpfTree α β ρ σ₁
 \end{leancode}
-Remembering that \lean{σ₁} stands for \lean{QpfList ρ}, so we should define the following 
-composition, in such a way that \lean{F} is a QPF.
+
+Then, proceed as in \cref{sec:shape_types} to show that \lean{QpfTree.Shape} is a QPF.
+
+In this case, \lean{σ₁} is supposed to stand for \lean{QpfList ρ}, so we're aiming to define a QPF \lean{Base} which satisfies:
 %LEANIGNORE
 \begin{leancode}
-    def F α β ρ := QpfTree.Shape α β ρ (QpfList ρ)
+  Base α β ρ = QpfTree.Shape α β ρ (QpfList ρ)
 \end{leancode}
 
 
-\subsection{Parameter reuse}
+The \emph{composition pipeline} translates such an equation to a definition of \lean{Base} in terms of the appropriate construction on QPF, such that: (a) \lean{Base} is known to be a QPF, and (b) the desired equality indeed holds.
+
+
+% \subsection*{Parameter reuse}
+\begin{remark}
 Of course, multiple occurences of the same non-parameter type don't nead a fresh variable each.
 Suppose we had a constructor that takes two list, like
 %LEANIGNORE
@@ -396,28 +402,22 @@ Then we can reuse the same fresh parameter \lean{σ₁} for both occurences.
 \begin{leancode}
     | node₃ : β → ρ → σ₁ → σ₂ → QpfTree α β ρ σ₁ σ₂
 \end{leancode}
-Where \lean{σ₁} stands for \lean{QpfList ρ}, as before, and \lean{σ₂} stands for 
-\lean{QpfList (QpfList ρ)}.
+Where \lean{σ₁} stands for \lean{QpfList ρ}, as before, and \lean{σ₂} stands for \lean{QpfList (QpfList ρ)}.  
+
+Do note that this does \emph{not} apply when we are adding a new parameter (such as \lean{ρ} in our example) for recursive occurences in the very first step (to obtain the \lean{Nonrecursive} specification), such variables \emph{do} get substituted in all subexpressions.
+\end{remark}
 
 
 
-\subsection{Solving for compositions}%
-\label{subsec:comp_pipeline:solving}
+% \subsection*{Solving for compositions}%
+% \label{subsec:comp_pipeline:solving}
 
-Returning to our motivating example, recall that we're aiming to define a QPF \lean{F} which satisfies:
 
-%LEANIGNORE
-\begin{leancode}
-    F α β ρ = QpfTree.Shape α β ρ (QpfList ρ)
-\end{leancode}
-
-The \emph{composition pipeline} translates such an equation to a definition of \lean{F} in terms of the appropriate construction on QPF, such that: (a) \lean{F} is known to be a QPF, and (b) the desired equality indeed holds.
-
-As the name ``composition pipeline'' alludes, we are defining compositions of QPFs. Formally, \lean{MvQpf.Comp} has signature:
+As the name ``composition pipeline'' alludes, we are interested in defining compositions of QPFs. Formally, \lean{MvQpf.Comp} has the signature:
 \begin{center}
     \lean{TypeFun n → Vec (TypeFun m) n → TypeFun m}
 \end{center}
-An $n$-ary type function \lean{F} is composed with an $n$-sized vector of $m$-ary type functions, resulting in an $m$-ary type function. The composition is essentially defined as
+That is, an $n$-ary type function \lean{F} is composed with an $n$-sized vector of $m$-ary type functions, resulting in an $m$-ary type function. The composition is essentially defined as
 %LEANIGNORE
 \begin{leancode}
     (Comp F ![G₁, ..., Gₙ]) ![α₁, ..., αₘ] 
@@ -425,7 +425,7 @@ An $n$-ary type function \lean{F} is composed with an $n$-sized vector of $m$-ar
 \end{leancode}
 All arguments \lean{αᵢ} are broadcast to all functors \lean{Gⱼ}, meaning we don't have to worry about argument duplication or reordering.
 
-Continuing with the example, we are going to define \lean{F} as \lean{Comp QpfTree.Shape ![G₁, G₂, G₃, G₄]}, for some functors \lean{G₁}, \lean{G₂}, \lean{G₃} and \lean{G₄}, satisfying the following equalities:
+Continuing with the motivating example, we are going to define \lean{Base} as \lean{Comp QpfTree.Shape ![G₁, G₂, G₃, G₄]}, for some functors \lean{G₁}, \lean{G₂}, \lean{G₃} and \lean{G₄}, satisfying the following equalities:
 \begin{leancode}
     G₁ α β ρ = α                G₃ α β ρ = ρ
     G₂ α β ρ = β                G₄ α β ρ = (QpfList ρ)
@@ -435,7 +435,7 @@ At which point we are effectively in the same situation as before, wishing to de
 that satisfy certain equalities, betraying the recursive nature of the composition pipeline.
 
 Before we continue, it should be clarified that the composition pipeline does not support any kind
-of equation. For example, we cannot define a QPF that satisfies
+of equation. For example, it is impossible to define a QPF that satisfies
 \begin{badleancode}
     H α β = α → β 
 \end{badleancode}
@@ -475,8 +475,29 @@ If no such \lean{G} exists, it means the original equation was not valid.
 
 Then, we recursively call the composition pipeline, each time defining a new functor \lean{Hᵢ ... = eᵢ}, where \lean{Hᵢ} takes the same parameters as the original desired functor \lean{F}.
 
-Finally, \lean{F} can simply be defined as the composition of \lean{G} with \lean{![H₁, ..., Hₘ]}.
+Finally, \lean{Base} can simply be defined as the composition of \lean{G} with \lean{![H₁, ..., Hₘ]},
+whence the desired type is again obtained by taking the fixpoint.
+\begin{leancode}
+  def QpfTree α β : TypeFun 2 :=
+    MvQpf.Fix (TypeFun.ofCurried Base)
+\end{leancode}
 
+
+% TODO: check if this pagebreak still makes sense
+% \pagebreak[3]
+\section{Final Overview}
+To sum up, we can give a high-level overview of the procedure in the following steps.
+\begin{enumerate}
+  \item Make the specification non-recursive by introducing a new parameter (\cref{sec:rec_types})
+  \item Introduce more parameters, to obtain a shape type \lean{Shape} (\cref{sec:comp_pipeline})
+  \item Show that \lean{Shape} is a QPF, by (\cref{sec:shape_types})
+        \begin{enumerate}
+          \item Deriving an equivalent polynomial functor, and
+          \item Showing that this polynomial functor is isomorphic to \lean{Shape}
+        \end{enumerate}
+  \item Use the composition pipeline to solve for the intended values for parameters introduced in step 2 (\cref{sec:comp_pipeline})
+  \item Finally, take the fixpoint or cofixpoint (\cref{sec:rec_types})
+\end{enumerate}
 
 
 
