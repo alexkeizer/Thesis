@@ -41,9 +41,9 @@ Let's make this a bit clearer by look at examples that are \textbf{not} shape ty
 
 %LEAN namespace BadExample
 \begin{leancode}
-    inductive MyList α
-      | nil  : MyList α 
-      | cons : α → MyList α → MyList α
+    inductive List α
+      | nil  : List α 
+      | cons : α → List α → List α
 
     inductive ListWrapper α
       | mk : List α → ListWrapper α
@@ -53,8 +53,8 @@ Let's make this a bit clearer by look at examples that are \textbf{not} shape ty
 \end{leancode}
 %LEAN end BadExample
 
-The only parameter to \leanm{MyList} is α, but the \leanm{cons} constructor takes a \leanm{MyList α} as second argument,
-so \leanm{MyList} is not a shape type.
+The only parameter to \leanm{List} is α, but the \leanm{cons} constructor takes a \leanm{List α} as second argument,
+so \leanm{List} is not a shape type.
 Similarly, \leanm{ListWrapper.mk} (resp. \leanm{NatWrapper.mk}) takes an argument of type \leanm{List α} (resp. \leanm{Nat}),
 which are not type parameters, so these types are not shapes either.
 
@@ -84,14 +84,14 @@ Note that the head type does not take any type parameters.
     \begin{minipage}[t]{0.45\linewidth}
         \begin{leancode}
     inductive Sum.HeadT
-      | inl : Sum.HeadT
-      | inr : Sum.HeadT
+      | inl : HeadT
+      | inr : HeadT
         \end{leancode}
     \end{minipage}
     \begin{minipage}[t]{0.45\linewidth}
         \begin{leancode}    
     inductive Prod.HeadT
-      | mk : Prod.HeadT
+      | mk : HeadT
         \end{leancode}
     \end{minipage}
 \end{center}
@@ -105,22 +105,28 @@ The concrete structure of these types is not relevant, so we'll always use \lean
 of natural numbers less than $m$, to construct a type with cardinality $m$.
 
 \begin{remark}
-    We could have also used \lean{PFin2} for the head type, rather than generating bespoke inductive types.
-    However, the
+    We could have used \lean{PFin2} for the head type as well, rather than generating bespoke inductive types.
+    However, the current approach has the benefit that it's very clear which element of \lean{HeadT} represents which
+    constructor.
 \end{remark}
 
-So, we start by counting for each constructor, how many times it takes an argument of type \leanm{α_i},
-for each parameter \leanm{α_i}.
-\begin{center}
-\begin{tabular}{l|c|c}
-    & α & β \\ \hline
-    \lean{Sum.inl}  & 1 & 0 \\
-    \lean{Sum.inr}  & 0 & 1 \\
-    \lean{Prod.mk}  & 1 & 1 \\    
-\end{tabular}    
-\end{center}
+Let us start by counting for each constructor and each parameter type, how many times the constructor takes an argument of that type.
+\begin{figure}[h]
+    \begin{center}
+        \begin{tabular}{l|c|c}
+            & α & β \\ \hline
+            \lean{Sum.inl}  & 1 & 0 \\
+            \lean{Sum.inr}  & 0 & 1 \\
+            \lean{Prod.mk}  & 1 & 1 \\    
+        \end{tabular}    
+    \end{center}
 
-Using these counts, we define the child family of types, and subsequently, the polynomial functor.
+     \caption{Constructor argument bookkeeping}%
+    \label{fig:ctor_bookkeepping}
+\end{figure}
+
+
+Using the counts of \cref{fig:ctor_bookkeepping}, we define the child family of types, and subsequently, the polynomial functor.
 
 \begin{center}
   \begin{leancode}
@@ -134,7 +140,7 @@ Using these counts, we define the child family of types, and subsequently, the p
 \end{center}
 
 \begin{remark}
-    If the interpreter knowns which type to expect, say \lean{Sum.HeadT}, and we write an identifier with a leading
+    If Lean knowns which type to expect, say \lean{Sum.HeadT}, and we write an identifier with a leading
     dot, like \lean{.inl}, then it will automatically add the type as namespace, concluding that
     we must mean \lean{Sum.HeadT.inl}.
 \end{remark}
@@ -175,21 +181,29 @@ Recall that we defined vectors of size $n$ as functions \lean{PFin2 n → α}, s
         | 1 => ![a]
         | 0 => ![]
       )
+    
+    def QpfSum.inr {α β} (b : β) : QpfSum α β :=
+      MvPFunctor.mk .inr (fun (i : PFin 2) => match i with
+        | 1 => ![]
+        | 0 => ![b]
+      )
 \end{leancode}
 
 
-We could generate these constructors automatically, but the inner details will still be exposed
+We could expose these constructors, but the inner details will still be exposed
 when a user tries to destruct an element of \lean{QpfSum α β}.
 Clearly, this is not an ideal definition.
 
 \subsection{MvQpf.ofPolynomial}
 The solution is to not reinvent the wheel quite as much.
-The \leanm{inductive} version of \lean{Sum} and \lean{Prod} (and, indeed any shape type) works
-perfectly fine, and is much easier to work with than the polynomial functor-based version.
+The \leanm{inductive} version of \lean{Sum} and \lean{Prod} works perfectly fine,
+since shape types are non-recursive and non-composite by definition.
 
 In fact, the goal of this part of the procedure is not to redefine shape types, it is to show that
-they are QPFs by deriving an instance of \lean{MvQpf} (for the uncurried version).
-The way to do this is \lean{MvQpf.ofPolynomial}.
+they are QPFs by deriving an instance of \lean{MvQpf}.
+
+It stands to reason that if $P$ is a polynomial functor, and $F$ is isomorphic to $P$, then $F$ is at
+the very least a QPF, this is formalized by \lean{MvQpf.ofPolynomial}.
 
 %LEANIGNORE
 \begin{leancode}
@@ -202,12 +216,75 @@ The way to do this is \lean{MvQpf.ofPolynomial}.
                   : MvQpf F
 \end{leancode}
 
-If we can provide an isomorphism between \lean{TypeFun.ofCurried Sum} and the polynomial functor \lean{Sum.P}, 
-then \lean{ofPolynomial} shows that the former is a QPF.
+In the case of our \lean{Sum} example, we're instantiating \lean{ofPolynomial} with 
+\lean{F := TypeFun.ofCurried Sum} and \lean{P := Sum.P}.
 
-\begin{todo}
-    Maybe explain how box, unbox, etc. are generated?
-\end{todo}
+To generate \lean{box} and \lean{unbox} we expand our bookkeeping a bit. For each constructor argument
+we generate a fresh identifier, and while doing so we keep two lists: a list of all identifiers, in the
+order they were introduced, and a separate list for each parameter type, with just the identifiers for that type.
+
+To illustrate, consider the following, slightly artificial, type
+\begin{leancode}
+  inductive SumOfPairs α β γ where
+    | pairA     : α → α → SumOfPairs α β γ 
+    | pairCandB : γ → β → SumOfPairs α β γ   -- note the order of β and γ
+\end{leancode}
+
+Following the procedure introduced at the start of this section, we obtain a corresponding polynomial functor.
+\begin{leancode}
+  inductive SumOfPairs.HeadT where
+    | pairA     : HeadT
+    | pairCandB : HeadT
+
+  def SumOfPairs.ChildT : SumOfPairs.HeadT → TypeVec 3
+    | .pairA      => ![PFin2 2, PFin2 0, PFin2 0]
+    | .pairCandB  => ![PFin2 0, PFin2 1, PFin2 1]
+
+  def SumOfPairs.P : MvPFunctor 3 :=
+    ⟨SumOfPairs.HeadT, SumOfPairs.ChildT⟩
+\end{leancode}
+
+Let us use \lean{a₀} and \lean{a₁} for the arguments to the first constructor, and \lean{c} and \lean{b}
+for the second constructor, then we separate the arguments by their type.
+
+\begin{figure}[h]
+\begin{center}
+    \begin{tabular}{c|c|c}
+                    & \lean{pairA}  & \lean{pairCandB}  \\ \midrule
+        \emph{all}  & \lean{[a₀, a₁]} & \lean{[c, b]}   \\ \midrule
+        \lean{α}    & \lean{[a₀, a₁]} & \lean{[]}       \\
+        \lean{β}    & \lean{[]} & \lean{[b]}       \\
+        \lean{γ}    & \lean{[]} & \lean{[c]}       \\
+    \end{tabular}
+\end{center}
+
+\caption{Identifier bookkeeping for \texttt{\small SumOfPairs} constructors}%
+\label{fig:fresh_ctor_vars}    
+\end{figure}
+
+The definition of \lean{box} follows fairly directly from \cref{fig:fresh_ctor_vars}, namely
+\begin{leancode}
+  def SumOfPairs.box : SumOfPairs α β γ → SumOfPairs.P.Obj ![α, β, γ]
+    -- we pattern match using all variables for this constructor
+    | .pairA a₀ a₁ => MvPFunctor.mk .pairA fun i => match i with
+      | 2 => ![a₀, a₁]  -- α
+      | 1 => ![]        -- β 
+      | 0 => ![]        -- γ
+    | .pairCandB c b => MvPFunctor.mk .pairCandB fun i => match i with
+      | 2 => ![]        -- α 
+      | 1 => ![b]       -- β 
+      | 0 => ![c]       -- γ
+\end{leancode}
+
+Logically, \lean{unbox} does the reverse, 
+\begin{leancode}
+    def SumOfPairs.unbox : SumOfPairs.P.Obj ![α, β, γ] → SumOfPairs α β γ
+      := fun ⟨head, child⟩ => match head with
+          | .pairA      => SumOfPairs.pairA (child 2 0) (child 2 1)
+          | .pairCandB  => SumOfPairs.pairCandB (child 0 0) (child 1 0)
+  \end{leancode}
+
+The proof that these two functions are indeed inverses is a straightforward mix of case distinction and reflexivity.
 
 
 
@@ -215,29 +292,46 @@ then \lean{ofPolynomial} shows that the former is a QPF.
 
 
 \section{Recursive and corecursive types}
-Now we know how to turn any shape type into a qpf-based datatype.
-If a type is recursive, but otherwise does not mention other types, we can transform it into a shape
-type.
-Namely, by adding an extra variable and substituting it for all (co)recursive occurences of the type
+If a type is recursive, but otherwise does not mention other types it is not strictly a shape type,
+but we can transform it into one.
+Namely, by adding an extra type parameter \lean{ρ} and substituting \lean{ρ} for all (co)recursive occurences of the type
 to be defined.
 
-For example, the shape of \lean{MyList α}, defined at the start of the previous section, is
+For example, the shape of \lean{List α} (see \cref{sec:shape_types}) is
 \begin{leancode}
-    inductive List.Shape α ρ
-      | nil  : Shape α ρ
-      | cons : α → ρ → Shape α ρ
+  inductive List.Shape α ρ
+    | nil  : Shape α ρ
+    | cons : α → ρ → Shape α ρ
 \end{leancode}
 This is a valid shape type, so we follow the procedure above to derive an instance of \lean{MvQpf}.
 To get rid of the extra variable \lean{ρ}, we simply take the fixpoint.
 \begin{leancode}
-    def QpfList.Internal : TypeFun 2 
-        := MvQpf.Fix (TypeFun.ofCurried MyList.Shape)
-
+  def QpfList.Internal : TypeFun 2 
+    := MvQpf.Fix (TypeFun.ofCurried MyList.Shape)
 \end{leancode}
 
-\begin{todo}
-    Explain cofixpoint
-\end{todo}
+Conversely, suppose we wish to define \lean{CoList}, the \emph{coinductive} type of potentially infinite lists.
+We introduced this type in the introduction with the following specification.
+\begin{leancode}
+  inductive CoList α
+    | nil  : CoList α
+    | cons : α → CoList α → CoList α
+\end{leancode}
+There is no difference in the procedure to obtain the corresponding shape, we just replace all occurences
+of \lean{CoList α} as constructor argument type with a new type parameter \lean{ρ}, obtaining the exact same shape
+as for \lean{List}.
+\begin{leancode}
+  inductive CoList.Shape α ρ
+    | nil  : Shape α ρ
+    | cons : α → ρ → Shape α ρ
+\end{leancode}
+But rather than taking the fixpoint, we take the \emph{cofixpoint} for a coinductive interpretation.
+\begin{leancode}
+  def CoList.Internal : TypeFun 2 
+    := MvQpf.CoFix (TypeFun.ofCurried CoList.Shape)
+\end{leancode}
+
+
 
 
 
@@ -384,13 +478,6 @@ Then, we recursively call the composition pipeline, each time defining a new fun
 Finally, \lean{F} can simply be defined as the composition of \lean{G} with \lean{![H₁, ..., Hₘ]}.
 
 
-
-\section{A final example}
-\begin{todo}
-    Do the entire procedure for
-    codata NatStream
-    | mk : Nat → NatStream → NatStream
-\end{todo}
 
 
 
