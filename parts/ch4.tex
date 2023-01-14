@@ -139,7 +139,7 @@ For the base case $n=0$, the vector \lean{G} is empty, and its vacuous to say al
 %LEANIGNORE
 \begin{leancode}
     instance instNil    (G : Vec (TypeFun m) 0) : VecMvQpf G
-        := /* ... */
+        := /- ... -/
 \end{leancode}
 
 For $n+1$, we recurse in the \lean{succ} typeclass variable.
@@ -150,7 +150,7 @@ For $n+1$, we recurse in the \lean{succ} typeclass variable.
                         [zero : MvQpf (G .fz)]
                         [succ : VecMvQpf (fun i => G i.fs)] : 
                             VecMvQpf G 
-        := /* ... */
+        := /- ... -/
 \end{leancode}
 
 There is no need to write typeclass variables in terms of \lean{VecMvQpf} because of the following instance.
@@ -167,7 +167,7 @@ Note that we could write \lean{instNil} and \lean{instSucc} directly in terms \l
                         [zero : MvQpf (G .fz)]
                         [succ : ∀ i, G i.fs] : 
                             ∀ i, G i 
-        := /* ... */
+        := /- ... -/
 \end{leancode}
 This is accepted, but won't actually help to derive instances for larger vectors \lean{G}.
 It seems that Lean puts a limit on recursion depth when trying to infer a universally quantified 

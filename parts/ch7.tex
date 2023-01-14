@@ -18,9 +18,8 @@ looks roughly like the following:
 \end{leancode}
 The names and number of constructors will differ, but crucially Lean will generate a \emph{non} universe 
 polymorphic type. That is, \lean{HeadT} lives in \lean{Type 0}, and only \lean{Type 0}.
-
 As a result, any QPF defined with \data{}/\codata{} will \emph{not} be universe polymorphic.
-For example, our running example of lists,
+Recall the running example of lists,
 \begin{leancode}
   data List α 
     | nil  : List α
@@ -32,7 +31,7 @@ The \inductive{} analogue of this definition \emph{is} polymorphic, but because 
   
 
 The solution is fairly simple, we can explicitly state that we want \lean{HeadT} to be polymorphic
---- recall that the child family of types is universe polymorphic because of the use of \lean{PFin2} (see~\cref{sec:shape_types,sec:enhance:pfin2})
+--- noting that the child family of types is universe polymorphic because of the use of \lean{PFin2} (see~\cref{sec:shape_types,sec:enhance:pfin2}).
 \begin{badleancode}
 
   inductive HeadT : Type u
@@ -43,39 +42,17 @@ The solution is fairly simple, we can explicitly state that we want \lean{HeadT}
 
 However, there is a bug in the version of Lean we're using (\texttt{nightly-2022-04-28}) 
 which causes it to reject the above. 
-This bug is already fixed in more recent versions of Lean, 
-so this limitation should be relatively easy to resolve.
+Newer versions of Lean 4 don't exhibit this bug, so it is easy to remove this limitation after updating
+our code to be compatible.
+% This bug is already fixed in more recent versions of Lean, 
+% so this limitation should be relatively easy to resolve.
 
 
 
-\section{Dead variables}
-In \cref{subsec:comp_pipeline:solving} we briefly mentioned the difference between dead and live
-variables in the context of the composition pipeline. However, the implementation of \data{} and \codata{}
-currently does not quite deal with dead variables appropriately yet. 
-For example, the following datatype should be accepted, but isn't yet.
+\section{Characteristic Theorems}
 
-\begin{badleancode}
-
-  data Arrow (α : Type _) β where
-    | mk : (α → β) → Arrow α β
-
-\end{badleancode}
-
-
-\section{Constructors and Characteristic Theorems}
-
-Currently, a user has to employ \lean{MvQpf.Fix.mk} or \lean{MvQpf.Cofix.mk} to construct elements
-of data-, resp. codatatypes. For example, the constructors for \lean{List} can be defined as:
-\begin{leancode}
-  def List.nil := MvQpf.Fix.mk MvQpf.Fix.mk List.Shape.nil
-  def List.cons := 
-    fun a as => MvQpf.Fix.mk MvQpf.Fix.mk (List.Shape.cons a as)
-\end{leancode}
-These should just be automatically generated.
-
-
-Similarly, (co)recursion principles are available through \lean{MvQpf.Fix.drec} (dependent recursor) 
-and \lean{MvQpf.Cofix.corec}, but because those are generic their signature is quite obscure.
+The formalizations of Avigad \etal{} provide (co)recursion principles, as \lean{Fix.drec} and \lean{Cofix.corec}.
+However, because of how these are defined, their signature is quite obscure and not suitable to expose to users.
 \begin{leancode}
   #check @MvQpf.Fix.drec _ List.Internal _
   -- {α : TypeVec 0} →
@@ -86,19 +63,21 @@ and \lean{MvQpf.Cofix.corec}, but because those are generic their signature is q
   --       (x : MvQpf.Fix List.Internal α) → β x
 \end{leancode}
 
-The \inductive{} version of \lean{List} defines its recursion principle as
+In constrast, the \inductive{} version of \lean{List} defines its recursion principle as
 \begin{leancode}
   def List.rec {α : Type _} {motive : QpfList α → Sort _} :
   motive QpfList.nil 
-    → ((head : α) → (tail : QpfList α) → motive tail → motive (QpfList.cons head tail))
+    → ((head : α) → (tail : QpfList α) → motive tail 
+                                          → motive (QpfList.cons head tail))
     → (t : QpfList α) 
     → motive t
 \end{leancode}
 
-Which is a lot easier to read.
-We can define the second recursion principle fairly easily in terms of the generic \lean{MvQpf.Fix.drec}.
+Which is a lot easier to read by comparison. To make our datatypes behave as similarly to Leans native
+\inductive{} types, we should generate the same recursion principles as Lean would.
+In this particular case, the second recursion principle is fairly easily defined in terms of \lean{MvQpf.Fix.drec}.
 \begin{leancode}
-  def List.rec {α : Type _} {motive : QpfList α → Sort _} : /* ... */ :=
+  def List.rec {α : Type _} {motive : QpfList α → Sort _} : /- ... -/ :=
     fun nil cons => MvQpf.Fix.drec (fun x => 
       match x with
       | .nil            => nil
@@ -106,21 +85,37 @@ We can define the second recursion principle fairly easily in terms of the gener
     )
 \end{leancode}
 
-We should probably automatically generate such specialized (co)recursion principles for all (co)datatypes.
-Similarly, \lean{MvQpf.Fix.ind} gives a generic induction principle, but it would be nicer to generate
-specialized induction principles.
+However, once we involve nested induction, the recursion principle generated by Lean becomes more complex.
+
+\begin{leancode}
+  inductive Tree (α : Type) where
+  | node : α → List (Tree α) → Tree α
+
+  #check @Tree.rec
+  -- {α : Type} → {motive_1 : Tree α → Sort u_1} →
+  --   {motive_2 : List (Tree α) → Sort u_1} →
+  --   ((a : α) → (a_1 : List (Tree α)) 
+  --        → motive_2 a_1 → motive_1 (Tree.node a a_1)) →
+  --   motive_2 [] →
+  --   ((head : Tree α) → (tail : List (Tree α)) 
+  --        → motive_1 head → motive_2 tail → motive_2 (head :: tail)) →
+  --   (t : Tree α) → motive_1 t
+\end{leancode}
 
 
-The last characteristic theorem is that of no confusion; i.e., that different combinations of constructors
-produce different elements. This principle is less straightforward, there does not exist a generalized
-version of it yet, so more work is needed to see how no confusion theorems would be generated.
+More work is required to determine how we can synthesize such specialized recursion principles from
+a datatype specification with nested induction, and it should be investigated how mixed induction/coinduction
+interacts with such recursors.
+
+Similarly, we should generate no confusion theorems; i.e., that different combinations of constructors
+produce different elements.
 
 
 
 \section{User-friendly (co)recursion and (co)induction}
 If we just want do structural recursion on a single variable, it's relatively easy to do so directly
-in terms of the recursion principle.
-For example, recursively determining the length of a list.
+in terms of the fundamental recursion principle.
+For example, determining the length of a list.
 \begin{leancode}
 def List.length : List α → Nat :=
   MvQpf.Fix.rec fun as => match as with
@@ -136,7 +131,8 @@ on multiple variables, with support for termination hints for when it fails to a
 termination.
 
 It would be interesting to see if the existing equation compiler mechanisms can be re-used
-to also provide a high-level way of defining (co)recursive functions for QPFs.
+to also provide a high-level way of defining (co)recursive functions for QPFs, so that users can write
+recursive functions on qpf-based datatypes in the same as they would for a regular \inductive{} type.
 
 % \subsection*{Coinduction}
 
