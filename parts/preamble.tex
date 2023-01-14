@@ -14,6 +14,7 @@
 \usepackage{xcolor}
 \usepackage{framed}
 \usepackage{booktabs}
+\usepackage{enumitem}
 
 \usepackage{tikz}
 \usepackage{tikz-cd}
@@ -152,6 +153,15 @@
 
 
 
+% Add a new list, whose references are called "step 1", "step 2", etc.
+% \newlist{stepenum}{enumerate}{10}
+% \setlist[stepenum,1]{label*=\arabic*., ref=(\arabic*)}
+% \setlist[stepenum,2]{label*=(\alph*)}
+
+% \crefname{stepenumi}{step}{stepenum}
+% \Crefname{stepenumi}{Step}{stepenum}
+
+
 % 
 %   Custom commands
 % 
@@ -171,6 +181,7 @@
 \newcommand\inductive{{\keyword{inductive}}}
 \newcommand\data{\keyword{data}}
 \newcommand\codata{\keyword{codata}}
+\newcommand\qpf{\keyword{qpf}}
 \newcommand\ldef{\keyword{def}}
 
 \newcommand\Type{\leanm{Type}}

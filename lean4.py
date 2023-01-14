@@ -44,7 +44,7 @@ class Lean4Lexer(RegexLexer):
         'constant', 'constants', 'print', 'opaque', 'reducible', 'irreducible',
         'def', 'macro', 'elab', 'syntax', 'macro_rules', 'reduce', 'where',
         'abbrev', 'noncomputable', 'class', 'attribute', 'synth', 'mutual',
-        'data', 'codata', 'deriving'
+        'data', 'codata', 'deriving', 'qpf'
     )
 
     keywords2 = (
