@@ -3,7 +3,7 @@
 %   TITLE PAGE
 %
 \title{Implementing a definitional (co)datatype package in Lean 4, based on quotients of polynomial functors}
-\author{Alex C.\,Keizer}
+\author{Alex C.\ Keizer}
 \birthdate{October 15th, 1998}
 \birthplace{Alkmaar, The Netherlands}
 \defensedate{T.B.D, 2023}
@@ -19,9 +19,21 @@
 \pagenumbering{roman}
 
 \chapter*{Abstract}
-\begin{todo}
-    Abstract
-\end{todo}
+Coinduction is the dual of induction. While inductive types are ubiquitous in functional programming
+languages, coinductive types, also known as codatatypes, are considerably less well-supported.
+Notably, Lean 4, the latest edition of an interactive theorem prover and dependently typed functional 
+programming language developed at Microsoft Research, lacks support for coinduction.
+
+I have implemented a (co)datatype package for Lean 4, which compiles high-level, definitional
+specifications for types, which may mix induction, coinduction and quotients, into a definition
+of that type in terms of quotients of polynomial functors.
+These QPFs were previously formalized in Lean 3, which I took as a starting point and ported to Lean 4.
+This thesis describes how the compilation procedure works, and dives into technical details of the Lean
+meta-programming system that influenced the implementation.
+The package adds \data{} and \codata{} macros for specifications of inductive, respectively coinductive, 
+types. Additionally, a \qpf{} macro exposes a specific part of the procedure, called the \emph{composition pipeline},
+that is used to define new QPFs composed of other QPFs.
+
 
 \tableofcontents
 

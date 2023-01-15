@@ -69,6 +69,14 @@
 
 % Unicode glyphs
 
+\newcommand\iflean[2]{%
+\ifx\leanmode\undefined%
+#2%
+\else%
+#1%
+\fi%
+}
+
 \newcommand\leanoperator[1]{%
 \ifx\leanmode\undefined%
 #1%
@@ -76,6 +84,8 @@
 {\color{operatorcolor} #1}%
 \fi%
 }
+
+% TODO: make it so that these don't mess up monospacing in code environment
 \newcommand\leanmathoperator[1]{\ensuremath{\leanoperator{#1}}} 
 \newunicodechar{→}{\leanmathoperator{\rightarrow}}
 \newunicodechar{⟹}{\leanmathoperator{\Longrightarrow}}
@@ -84,6 +94,7 @@
 \newunicodechar{α}{{\droidmono α}}
 \newunicodechar{β}{{\droidmono β}}
 \newunicodechar{γ}{{\droidmono γ}}
+\newunicodechar{ρ}{{\droidmono ρ}}
 \newunicodechar{₁}{\ensuremath{_\text{1}}}
 \newunicodechar{₂}{\ensuremath{_\text{2}}}
 \newunicodechar{ᵢ}{\ensuremath{_\text{i}}}

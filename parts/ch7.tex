@@ -5,12 +5,11 @@
 
 As mentioned before, the implementation is not yet complete.
 This chapter will explain some limitations in what is implemented so far, and discuss
-additions that seem useful.
+directions for future implementation efforts.
 
 \section{Universe Polymorphism}
 
-Recall from~\cref{sec:shape_types} that the procedure starts with synthesizing a ``head'' type that
-looks roughly like the following:
+Recall from~\cref{sec:shape_types} that the procedure starts with synthesizing a head type, roughly like the following:
 \begin{leancode}
   inductive HeadT
     | CtorA : HeadT
@@ -30,8 +29,7 @@ The \inductive{} analogue of this definition \emph{is} polymorphic, but because 
 \lean{List} defined in terms of \data{} is \emph{not}.
   
 
-The solution is fairly simple, we can explicitly state that we want \lean{HeadT} to be polymorphic
---- noting that the child family of types is universe polymorphic because of the use of \lean{PFin2} (see~\cref{sec:shape_types,sec:enhance:pfin2}).
+The solution is fairly simple, we can explicitly state that we want \lean{HeadT} to be polymorphic---noting that the child family of types is already universe polymorphic because of the use of \lean{PFin2} (see~\cref{sec:shape_types,sec:enhance:pfin2}).
 \begin{badleancode}
 
   inductive HeadT : Type u
@@ -52,7 +50,7 @@ our code to be compatible.
 \section{Characteristic Theorems}
 
 The formalizations of Avigad \etal{} provide (co)recursion principles, as \lean{Fix.drec} and \lean{Cofix.corec}.
-However, because of how these are defined, their signature is quite obscure and not suitable to expose to users.
+However, because of how these are defined, their signature is quite obscure and not directly suitable for end-users.
 \begin{leancode}
   #check @MvQpf.Fix.drec _ List.Internal _
   -- {α : TypeVec 0} →
@@ -107,8 +105,9 @@ More work is required to determine how we can synthesize such specialized recurs
 a datatype specification with nested induction, and it should be investigated how mixed induction/coinduction
 interacts with such recursors.
 
-Similarly, we should generate no confusion theorems; i.e., that different combinations of constructors
+Similarly, we should generate no confusion theorems; proving that different combinations of constructors
 produce different elements.
+
 
 
 
@@ -125,9 +124,9 @@ def List.length : List α → Nat :=
 
 It is important that Lean can statically determine that recursive functions terminate for all 
 arguments.\footnote{Lean \emph{can} admit non-terminating functions when they're marked partial, but partial functions are not allowed to be used in proofs}
-In the case of structural recursion on a single variable, such as the example above, termination is straightforward,
+In the case of this example, termination is straightforward,
 but Lean also has a sophisticated \emph{equation compiler} that makes it easy to define functions that recurse
-on multiple variables, with support for termination hints for when it fails to automatically proof
+on multiple variables, with support for termination hints, to help when the system fails to automatically proof
 termination.
 
 It would be interesting to see if the existing equation compiler mechanisms can be re-used
@@ -135,10 +134,10 @@ to also provide a high-level way of defining recursive functions for QPFs, so th
 recursive functions on QPF-based datatypes in the same as they would for a regular \inductive{} type.
 
 The dual of termination of recursive functions is productivity of corecursive functions.
-\emph{Guarded corecursion} is The trivially productive analogue of structured recursion, 
+\emph{Guarded corecursion} is the trivially productive analogue of structured recursion, 
 and supporting an easy syntax for defining guarded corecursive functions would be a great first step.
 Further steps might focus on a more general strategy for proving productivity of non-guarded corecursion,
-similar to termination hints for recursive functions.
+such as~\cite{blanchetteFriendsBenefitsImplementing2017} did for Isabelle.
 
 % \subsection*{Coinduction}
 

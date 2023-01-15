@@ -2,25 +2,24 @@
 \chapter{Porting the QPF formalization from Lean3 to Lean4}%
 \label{ch:porting}
 
-Lean is primarily developed by Leonardo de Moura \etal{} at Microsoft Research~\cite{demouraLeanTheoremProver2015, avigadTheoremProvingLean}. As an in-progress research project, the team explicitly provides no stability guarantees. Indeed, Lean 4 is not backward compatible with Lean 3.
-This means that the QPF formalizations by Avigad \etal{}
+Lean is primarily developed by Leonardo de Moura \etal{} at Microsoft Research~\cite{demouraLeanTheoremProver2015, avigadTheoremProvingLean}. As an in-progress research project, the team explicitly provides no stability guarantees. Indeed, Lean 4 is not backward compatible with Lean 3, meaning that the QPF formalizations by Avigad \etal{}
 (\cite{avigadDataTypesQuotients2019a}) were not directly usable for this project. The current chapter details my efforts to port these formalizations to Lean 4.
 
 
 
 Lean 3 has a comprehensive, community-maintained mathematics library, mathlib (\cite{themathlibcommunityLeanMathematicalLibrary2020}), 
-which also functions as its unofficial, de-facto standard library.
-mathlib4 is the port of this library to Lean 4 (\cite{mathlib4}),
+which also functions as its unofficial, de-facto standard library, and to which Avigad \etal contributed
+their formalization of QPFs.
+Mathlib4 is the port of this library to Lean 4 (\cite{mathlib4}),
 but large parts were still missing at the time I started my thesis project (and still are, at time of writing).
-In particular, Avigad \etal{} contributed their formalizations to mathlib, but these formalizations 
-were far from being ported in mathlib4.
+In particular, the QPF formalizations were far from being ported in mathlib4.
 
 
 
 \subsection*{Upstreaming}
 It should be noted that at the time, the maintainers of mathlib4 were not yet interested in 
-community-ported files. This has since changed and I am currently in the process of
-contributing the result of my porting work back to mathlib4, making it more widely available.
+community-ported files. This has since changed, and I am currently in the process of contributing
+the ported QPF formalization back to mathlib4, making it more widely available.
 
 
 
@@ -34,20 +33,21 @@ To help with porting code, the mathlib community developed the mathport tool (\c
 (best-effort) translates Lean 3 source code into Lean 4 source code. This takes care of superficial 
 syntax and naming changes, but the translation is far from perfect.
 In particular, mathport did reasonably well in translating declaration signatures, 
-but proofs did not translate well.
+but the translated proofs were full of errors.
 This is primarily because mathport (intentionally) does not deal with meta-programming code at all and a lot
 of \emph{tactics} (proof automation meta-programs) provided by mathlib were still missing from mathlib4.
 
 
 \section{Implicit arguments and other inference}
-Lean relies heavily on automated inference to reduce verbosity, falling back on explicitly provided
-values or annotations when inference gets things wrong.
-Lean 4 will sometimes fail to infer the right thing, were Lean 3 did succeed, causing an error.
+Lean relies heavily on inference to reduce verbosity, falling back on explicitly provided
+values or annotations when types or arguments are wrongly inferred.
+Lean 4 sometimes inferred something sufficiently different from Lean 3 that the result no longer
+typechecked.
 
 
 
 For example, in the following theorem, Lean 4 couldn't figure out the right types for \lean{f ::: g} and 
-\lean{f' ::: g'}, so explicit type annotations, which look like \lean{(f ::: g : \_)}, had to be added.
+\lean{f' ::: g'}. Explicit type annotations, which look like \lean{(f ::: g : \_)}, had to be added.
 \begin{leancode}
   theorem append_fun_inj {α α' : Typevec n} {β β' : Type _} 
                          {f f' : α ⟹ α'} {g g' : β → β'} :
@@ -56,27 +56,24 @@ For example, in the following theorem, Lean 4 couldn't figure out the right type
 \end{leancode}
 
 
-Similarly, Lean does inference slightly differently for so-called \emph{eliminators}.
+Similarly, Lean has a different inference algorithm for so-called \emph{eliminators}.
 Lean 3 (and more recent versions of Lean 4) support an \leanm{@[elab_as_eliminator]} attribute on user-defined
 functions that instructs Lean to use this specialized eliminator inference, but the version we're using
 does not have that.
-
 This came up, e.g., in the proof of \lean{Cofix.bisim\_aux}. The Lean 3 proof simply used
 \begin{leancode}    
   apply quot.inductionOn c
 \end{leancode}  
-Where \lean{Quot.inductionOn} is marked with \lean{elab\_as\_eliminator}.
+Where \lean{quot.inductionOn} is marked with \lean{elab\_as\_eliminator}.
 In Lean 4 we had to explicitly provide the \emph{motive} (which determines the induction hypothesis), 
 since it was being inferred incorrectly.
 \begin{leancode}
   apply Quot.inductionOn (motive := fun c => ∀b, r c b → 
-                                      Quot.lift (Quot.mk r') h₁ c 
-                                      = Quot.lift (Quot.mk r') h₁ b) 
-            c
+        Quot.lift (Quot.mk r') h₁ c = Quot.lift (Quot.mk r') h₁ b) c
 \end{leancode}
 
 The tricky part is that the proof generally doesn't throw an error at \lean{Quot.inductionOn} when it
-infers the wrong motive; it just produces a different proof state, which trips up later tactics.
+infers the wrong motive; it just produces a different proof state, tripping up later tactics.
 Catching this involved stepping through both the Lean 3 and Lean 4 proof states to find out where, exactly, the proof states diverged, 
 and then explicitly providing the desired motive.
 
@@ -89,6 +86,7 @@ However, we can instruct it to be more verbose (both in Lean 3 and in Lean 4):
 \end{leancode}
 
 This problem was hard to diagnose but relatively easy to remedy.
+Once the divergence was found, we can readily see from the Lean 3 proof state what the motive should be.
 
 
 \section{Missing Tactics} 
@@ -100,9 +98,8 @@ Instead, proofs that used such missing tactics were changed to use the lower-lev
 available. For example, the \lean{congr} tactic
 was missing, but easily replaced with either \lean{apply congr}, \lean{apply congrArg}, or \lean{apply congrFun}.
 
-Notably, mathlib4 has made much progress in implementing more tactics since, 
-so presumably these proofs can be changed back to use the higher-level tactics when
-contributing back to mathlib4.
+Notably, mathlib4 has made much progress in implementing such missing tactics in more recent versions, 
+so these proofs can now be changed back to use the higher-level tactics.
 
 
 

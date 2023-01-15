@@ -4,7 +4,6 @@
 
 Modern logic is primarily built on a framework of induction.
 It is no surprise, then, that Lean---an interactive theorem prover / dependently typed, functional programming language---prominently features induction.
-Specifically, it is based on the Calculus of Inductive Constructions~\cite{avigadTheoremProvingLean}.
 
 In Lean, new datatypes are generally defined using the \inductive{} keyword, which exposes a high-level, definitional syntax.
 
@@ -107,8 +106,8 @@ We can also define finitely branching trees of infinite depth, by replacing \lea
 
 
 \subsection*{Quotients}
-Besides \inductive{} types, Lean also supports defining new types as quotients.
-It is common, e.g., to define a multiset as the equivalence class of lists that are equal up to permutation.
+Besides \inductive{} types, Lean also supports defining new types as quotients of other types.
+It is common, e.g., to define a multiset as the equivalence class of lists with respect to the relation that equates lists up to permutation.
 
 %LEANIGNORE
 \begin{leancode}
@@ -131,7 +130,7 @@ Yet, this definition won't compile; it is not allowed to nest a recursive occurr
 behind a quotient type. Lean's built-in inductive and quotient types do not compose well.
 
 
-As the name suggests, QPFs also support a notion of quotient types. Our datatype package does not yet
+As the name suggests, QPFs support a notion of quotient types. Our datatype package does not yet
 provide user-friendly syntax for defining QPF-based quotient types, but suppose that \lean{Multiset'} were manually
 defined in terms of QPFs, then we can define unordered trees as follows:
 \begin{leancode}
@@ -161,10 +160,12 @@ which dates back to an effort to add a definitional package for (co)datatypes to
 Inspiration has also gone the other direction, with Fürer \etal{} studying quotients of BNFs~\cite{furerQuotientsBoundedNatural2022}.
 
 
-
-As mentioned, Lean is based on the Calculus of Inductive Constructions~\cite{coquandMetamathematicalInvestigationsCalculus1989}.
+Lean is developed by de Moura \etal{} at Microsoft Research, based on the Calculus of Inductive Constructions~\cite{demouraLeanTheoremProver2015,coquandMetamathematicalInvestigationsCalculus1989}.
 Coq, another theorem prover based on this same calculus, provides support
-for coinductive types and corecursion directly in the trusted kernel~\cite{gimenezApplicationCoinductiveTypes1996,gimenezTutorialRecursiveTypes1998}.
+for coinductive types and corecursion directly in the trusted kernel~\cite{gimenezApplicationCoinductiveTypes1996,gimenezTutorialRecursiveTypes1998}. Contrast this with the BNF or QPF approaches, which are implemented entirely as a
+library.
+
+The study of coinduction 
 
 
 \begin{todo}
@@ -183,9 +184,11 @@ implementation of these macros, and the Lean 4 meta-programming system.
 Finally, \cref{ch:conclusion} concludes the thesis.
 
 Accompanying code can be found at \url{https://github.com/alexkeizer/qpf4}.
-It provides the \data{} and \codata{} commands discussed so far, alongside a \lean{qpf} command and \lean{fin\_destr} tactic.
+It provides the \data{} and \codata{} commands discussed so far, alongside a \qpf{} command for the composition
+pipeline. A preconfigured environment is also made available at \url{https://gitpod.io#github.com/alexkeizer/qpf4-example/blob/main/Scratch/Examples.lean}, 
+allowing readers to try out \data{} and \codata{} in their browser, with minimal configuration.
 
-The code snippets in this thesis are tested with version \lean{leanprover/lean4:nightly-2022-04-28}. The same version was used to develop the code in the linked repository.
+The code snippets in this thesis are tested with version \lean{leanprover/lean4:nightly-2022-04-28}. The same version was used to develop the code in the linked repository and runs in the preconfigured environment.
 The thesis also contains code that (intentionally) does not typecheck. These snippets are typeset with a red line, like so:
 \begin{badleancode}
 
