@@ -2,13 +2,12 @@
 \chapter{Conclusion}
 \label{ch:conclusion}
 
-Although the implementation is far from complete, and a lot more work is required to support (co)recursive
-functions in particular, this thesis hopes to contribute to making coinductive types available in Lean. 
+Although the implementation is far from complete, and a lot more work is required to improve the ergonomics of (co)recursive functions, this thesis hopes to contribute to making coinductive types available in Lean, with strong support for mixed induction, coinduction, and quotients. 
 
 In particular, I designed a procedure that compiles definitional specifications of (co)dataypes
 that arbitrarily nest induction, coinduction, and quotients into constructions on quotients of polynomial functors that define the desired type.
 
-This procedure was built upon a preexisting formalization of QPFs, but first,
+This procedure was built upon a pre-existing formalization of QPFs, but first,
 this formalization had to be ported from Lean 3 to Lean 4. I am also in the process of making
 these ported formalizations available as part of the mathlib4 project, the port of Leans community-maintained, comprehensive mathematics library.
 
