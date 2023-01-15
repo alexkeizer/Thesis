@@ -4,9 +4,9 @@
 \label{ch:enhancing}
 
 
-In the preceding chapter we discussed how to port the formalization of QPFs from Lean3 to Lean4.
-In this process, I identified, and ineed implemented various enhancements. 
-This chapter serves to elaborate on those changes which are too big to be considered just porting, but don't fall strictly under (co)datatype synthesis and metaprogramming parts of the project.
+In the preceding chapter, we discussed how to port the formalization of QPFs from Lean 3 to Lean 4.
+In this process, I identified and implemented various enhancements. 
+This chapter serves to elaborate on those changes which are too big to be considered just porting but don't fall strictly under (co)datatype synthesis and meta-programming parts of the project.
 
 
 
@@ -14,19 +14,15 @@ This chapter serves to elaborate on those changes which are too big to be consid
 
 
 \section{Functions \& Currying}
-Like most functional languages, in Lean it is idiomatic to write functions in their curried form, 
+Like most functional languages, it is idiomatic to write Lean functions in their curried form, 
 so \leanm{f : Type → Type → Type}, rather than \leanm{f : (Type × Type) → Type}.
 However, the formalizations are done in terms of vectors of types and uncurried type functions.
 
 %LEAN namespace Hidden -- hide definition, so it does not interfere
 \begin{leancode}
-    def TypeFun (n : Nat)
-      := TypeVec n → Type v
+    def TypeFun (n : Nat) := TypeVec n → Type v
 \end{leancode}
 %LEAN end Hidden
-Which is a function that takes a list of exactly $n$ types, and returns a type --- the \lean{u} and
-\lean{v} refer to the respective universes that these types live in, and betray a technical limitation
-of this encoding: all arguments to a \leanm{TypeFun} must live in the same universe.
 
 There is an obvious translation from \leanm{TypeFun} to a curried type function and, vice versa, from a curried function taking $n$ types from the same universe and returning a type, to a \leanm{TypeFun n}.
 These conversions were implemented as \leanm{TypeFun.toCurried} and \leanm{TypeFun.ofCurried}, respectively, and it was proven that these functions are isomorphisms. 
@@ -45,7 +41,7 @@ The type \leanm{CurriedFun α β n} is a recursively defined alias for \leanm{α
       | 1   => α → β
       | n+1 => α → CurriedFun α β n
 \end{leancode}
-Intuitively one might expect a \leanm{CurriedFun} taking no arguments (so, $n = 0$) to be equal to  just \leanm{β}, but that does not typecheck --- \leanm{Type v} and \leanm{Type (max u v)} are not, in general, the same type.
+Intuitively one might expect a \leanm{CurriedFun} taking no arguments (so, $n = 0$) to be equal to just \leanm{β}, but that does not typecheck --- \leanm{Type v} and \leanm{Type (max u v)} are not, in general, the same type.
 One should be able to lift \lean{β} into the right universe, but such functions are not particularly interesting, so the simpler solution was chosen: functions that take no arguments are functions from the universe polymorphic unit type.
 
 A curried type function is just an instance of \leanm{CurriedFun}.
@@ -66,8 +62,8 @@ For the time being, we'll satisfy ourselves with hiding these details throughs
 
 
 
-\section{Make MvQpf automatically assume MvFunctor}
-The following change might feel underwhelming, but it presents a considerably quality 
+\section{Make MvQpf extend MvFunctor}
+The following change might feel underwhelming, but it presents a considerable quality 
 of life improvement for the \leanm{MvQpf} typeclass. The latter was originally defined as
 %LEANIGNORE
 \begin{leancode}
@@ -89,9 +85,8 @@ For example, if we wish to formalize ``Let \lean{F} be an $n$-ary QPF'', we woul
 \end{leancode}
 
 This doesn't work, we have to assume a \lean{[MvFunctor F]} bound as well.
-Even worse, in some situations different mentions of \lean{MvQpf F} could infer different \lean{MvFunctor F} instances for the implicit argument, causing surprising type mismatches.
-
-So, the definition was changed to 
+Even worse, in some situations, different mentions of \lean{MvQpf F} could infer different \lean{MvFunctor F} instances for the implicit argument, causing surprising type mismatches.
+So, the definition was changed to \keyword{extend} \lean{MvFunctor}, rather than taking an argument.
 \begin{leancode}
     class MvQpf {n : Nat} (F : TypeFun n) extends MvFunctor F where
         -- ...
@@ -187,7 +182,7 @@ Originally, \lean{Fin2} was defined as the following, straightforward, inductive
 \end{leancode}
 
 However, this definition forces \lean{Fin2} to live in \Type.
-During the project a need arose for a finite type with exactly $n$ inhabitants, but in arbitrary universes. Thus, the \emph{universe polymorphic} \lean{PFin2} type was added.
+During the project, a need arose for a finite type with exactly $n$ inhabitants, but in arbitrary universes. Thus, the \emph{universe polymorphic} \lean{PFin2} type was added.
 \begin{leancode}
     inductive PFin2 : Nat → Type u
     | fz : PFin2 (n+1)

@@ -2,16 +2,29 @@
     "makefile.extensionOutputFolder": "./.vscode",
     "cSpell.words": [
         "Avigad",
+        "codata",
+        "codatatypes",
+        "cofixpoint",
+        "coinduction",
         "coinductive",
+        "corecursive",
         "datatype",
         "datatypes",
         "equational",
+        "fixpoint",
         "functorial",
         "functoriality",
         "implicits",
+        "mathlib",
+        "mathport",
         "multiset",
         "noncomputable",
         "prover",
-        "typeclass"
+        "QPFs",
+        "recursors",
+        "resp",
+        "typecheck",
+        "typeclass",
+        "typeclasses"
     ]
 }

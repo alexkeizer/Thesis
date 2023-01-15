@@ -14,16 +14,16 @@ We will assume as little background knowledge as possible, yet, some (minimal) e
     \cite{avigadTheoremProvingLean,christiansenFunctionalProgrammingLean}.
 \end{remark}
 
-In the interest of consistency, we will be using Lean 4 syntax and naming conventions, even in our
-current discussion of the general theory and formalizations as presented by Avigad \etal. (in Lean 3).
-The changes made to definitions in this chapter are purely superficial.
+In the interest of consistency, we will use Lean 4 syntax and naming conventions throughout the whole thesis,
+even in our current discussion of the general theory and formalizations as presented by Avigad \etal. (in Lean 3).
+The differences between the Lean definitions presented here and their original definition in~\cite{avigadDataTypesQuotients2019a} are purely superficial.
 
 
 
 The encoding of types as QPFs relies on a key observation; a lot of types are functorial in nature.
 Take, for example, the inductive type of lists, specified as
 \begin{leancode}
-    inductive List (α : Type)
+  inductive List (α : Type)
     | nil  : List α
     | cons : α → List α → List α
 \end{leancode}
@@ -33,32 +33,39 @@ We call such functions \emph{type functions}. Note that we mean function here in
 
 \section{Types are Terms \& Type Universes}
 In a dependently typed language, such as Lean, types \emph{are} terms. In particular, things like \lean{Nat} and \lean{String} are types, but they are also \emph{values} of type \Type.
-The signature of \lean{List}, then, is \leanm{Type → Type}, just like the signature of, e.g., \lean{Nat.add} (binary addition of natural numbers) is \leanm{Nat → Nat → Nat}.
+The signature of \lean{List}, then, is \leanm{Type → Type}.
+
+% Since types are first-class terms in our language,  no different from how the signature of, e.g., \lean{Nat.add} (binary addition of natural numbers) is \leanm{Nat → Nat → Nat}.
 
 \begin{remark}
-    We also write \leanm{f : α → β} to say ``\lean{f} has type \leanm{α → β}'', meaning that \lean{f} is a function from type \lean{α} to type \lean{β}.
+    We write \leanm{f : α → β} to say ``\lean{f} has type \leanm{α → β}''.
+    The arrow type \lean{α → β} stands for the type of functions taking an argument of type \lean{α}
+    to produce a value of type \lean{β}.
 \end{remark}
 
-We call \Type{} a \emph{type universe}, i.e., a type whose elements are themselves types. However, \Type{} is again also a value, which needs be of some type.
+We call \Type{} a \emph{type universe}, i.e., a type whose elements are themselves types. However, \Type{} is itself also a value, which needs to live in some universe.
 It cannot be the case that \leanm{Type : Type}; this leads to Girard's paradox, which is the type theory analogue of Russel's Paradox \cite{girardInterpretationFonctionelleElimination1972}.
 
-Instead, there Lean has an infinite sequence of increasing type universes, so that \leanm{Type : Type 1}, \leanm{Type 1 : Type 2}, and in general, \leanm{Type u : Type (u+1)}. In fact, \leanm{Type} is just a shorthand for \leanm{Type 0}, the smallest type universe.
+Instead, Lean has an infinite sequence of increasing type universes, so that \leanm{Type : Type 1}, \leanm{Type 1 : Type 2}, and in general, \leanm{Type u : Type (u+1)}. In fact, \leanm{Type} is just a shorthand for \leanm{Type 0}, the smallest type universe.
 
-Universe levels \lean{u} are essentially natural numbers, but they are \textbf{not} first class values, and are indeed very different from elements of \leanm{Nat}.
-In particular, when writing \Typen{u}, the universe \lean{u} is \textbf{not} a regular term. There is a separate grammar, with some minimal builtin operations, that defines valid universe levels.
+Universe levels \lean{u} are essentially natural numbers, but they are \textbf{not} first-class values, and are indeed very different from elements of \leanm{Nat}.
+In particular, when writing \Typen{u}, the universe level \lean{u} is \textbf{not} a regular term. There is a separate grammar, with some minimal builtin operations, that defines valid universe levels.
 
-It is possible, and indeed common to be generic over the universe of some type parameter. For example, the actual, \emph{universe polymorphic} definition of lists specifies that the parameter \lean{α} should live in \lean{Type u}.
+It is possible, and indeed common to be generic over the universe of some type parameter, we call such 
+definitions \emph{universe polymorphic}.
+.
+For example, the actual definition of lists specifies that the parameter \lean{α} should live in an arbitrary universe \lean{Type u}.
 \begin{leancode}
-    inductive List (α : Type u)
+  inductive List (α : Type u)
     | nil  : List α
     | cons : α → List α → List α
 \end{leancode}
 
-Then the signature of \lean{List} becomes \leanm{Type u → Type u}, for any universe level \lean{u}.
+The signature of this version of \lean{List} is \leanm{Type u → Type u}, for arbitrary universe levels \lean{u}.
 
 \section{Functoriality of type functions}
 
-Returning to our discussion of \lean{List}, there is also an obvious mapping function that lifts a function \lean{f : α → β}, for arbitrary types \lean{α} and \lean{β}, to a function \lean{List α → List β}, by applying \lean{f} to each element of the argument list. Its signature is written as:
+Returning to our discussion of \lean{List} and its functoriality, there is an obvious mapping function to lift a function \lean{f : α → β}, for arbitrary types \lean{α} and \lean{β}, into a function \lean{List α → List β}, by applying \lean{f} to each element of the argument list. Its signature is written as:
 \begin{center}
     \leanm{map : (f : α → β) → List α → List β}
 \end{center}
@@ -71,17 +78,22 @@ Returning to our discussion of \lean{List}, there is also an obvious mapping fun
     We used this syntax in the definition of \lean{map} above, even though it is a regular, non-dependent function, just to give a name to the first argument. 
     It would have been equivalent to write \leanm{map : (α → β) → List α → List β}.
 
-    Notice also that, as \lean{α} and \lean{β} range over all types, they are thus actually also arguments to \lean{map}. Since the value of \lean{α} and \lean{β} can be inferred from the other arguments, though, there is no need to supply values for them when calling \lean{map}, hence, they can be implicit arguments. 
+    Notice that \lean{α} and \lean{β} are arbitrary and thus must also be arguments to \lean{map}. 
+    Nevertheless, the value of \lean{α} and \lean{β} can be inferred from the other arguments and there is no need to supply values for them when calling \lean{map}, hence, they can be \emph{implicit arguments}. 
     
     It is possible to explicitly define implicit arguments, using curly brackets \lean{\{...\}}.
     \begin{center}
-    \leanm{map: {α β : Type u} → (α → β) → List α → List β}
+        \leanm{map: {α β : Type u} → (α → β) → List α → List β}
     \end{center}
-    However, Lean will automatically add such implicit binders for free variables, so long as it can infer which type it should have --- this feature is called ``auto bound implicits''. 
-    We generally won't write these implicit binders, instead adopting the convention that \lean{α} and \lean{β} refer to types.
+    This allows us to call \lean{map} as \lean{map f as} and the values of \lean{α} and \lean{β} are inferred
+    from the types of \lean{f} and \lean{as}.
+
+    Lean will automatically add implicit binders for free variables in a type signature,
+    a feature called \emph{auto bound implicits}. 
+    We will generally rely on this feature, adopting the convention that \lean{α} and \lean{β} refer to types.
 \end{remark}
 
-Together, a type function \leanm{F : Type u → Type v} and a mapping operation \lean{map : (f: α → β) → F α → F β} form a \emph{functor}, so long as they preserve: 
+A type function \leanm{F : Type u → Type v} together with a mapping operation \lean{map : (f: α → β) → F α → F β} form a \emph{functor}, so long as they preserve: 
 \begin{itemize}
     \item \emph{Identity maps}, that is, \lean{F (id α) = id (F α)}, with \lean{id β} the identity function on arbitrary types \lean{β}, and
     \item \emph{Compositions}, that is, \lean{(map f) ∘ (map g) = map (f ∘ g)}, where \lean{∘} denotes function composition
@@ -89,15 +101,16 @@ Together, a type function \leanm{F : Type u → Type v} and a mapping operation 
 \lean{List α} is an example of a functor, but so are, e.g., products (\lean{α × β}) and sums 
 (\lean{α ⊕ β}).
 
-A function \lean{f : F α → α}, for some fixed \emph{carrier} type \lean{α}, is called an \emph{\lean{F}-algebra}; inductive types correspond to the carrier of an \emph{initial} such algebra. To clarify, an \lean{F}-algebra \lean{f} is initial, if for every \lean{F}-algebra \lean{g : F(β) → β} there is exactly one arrow $\lean{rec} : α → β$ that makes the left square of \cref{fig:initial_alg_square} commute.
+A function $f : F(α) → α$, for some fixed \emph{carrier} type \lean{α}, is called an \emph{\lean{F}-algebra}.
+Inductive types correspond to the carrier of an \emph{initial} such algebra. To clarify, an \lean{F}-algebra \lean{f} is initial, if for every \lean{F}-algebra \lean{g : F(β) → β} there is exactly one arrow $\lean{rec} : α → β$ that makes the left square of \cref{fig:initial_alg_square} commute.
 \begin{figure}[ht]
     \begin{center}
 % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRADEAKAHW8bQAWdAJQgAvqXSZc+QijIAmKrUYs2vfkPGSQGbHgJEF5ZfWatEHHtwBGMHCO1T9so6SXUzay7zsPxyjBQAObwRKAAZgBOEAC2SGQgOBBIAIzUDHR2DAAK0gZyIFFYwQI4IJ6qFiARTjUx8YiJyUjGKuZsXLw4MAAeOAPAUTAAxmKiEpENrdQtiADMlR2WwRUgmdl5LoaWDDAR5ZP1cWmzKQtL3iDdfQM4Q6NiAWJAA
    % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRADEAKAHW8bQAWdAJQgAvqXSZc+QijIAmKrUYs2vfkPGSQGbHgJEF5ZfWatEHHtwBGMHCO1T9so6SXUzay7zsOnutIGcsgArCaeqhZWGgyCjhLOMoYo4R4q5up8cVqJgS4pyADsERneMbb2CTp6ySEl6V7RvlXiyjBQAObwRKAAZgBOEAC2SGQgOBBIAIzUDHR2DAAKQa6WA1idAjggkZmWfQGDI2PUk0jGZdFcvDgwAB44T8ADMADGYqJ5x6OIl+eIADMe3KnV2IHmixWBTkEJgfR23yGv1mEymQJBzW4d0ez1eHyOyKQ4TRSAALJi2G9wZCYMtVik4QjCSdEAA2M7oilXNg3bEPJ44YBvCD4z4s34lUnsymWKASpBSgEkppZHGC4Wi95iNpiIA
 \begin{tikzcd}
-    F(\alpha) \arrow[dd, "f"'] \arrow[rr, "F(\texttt{rec})"] &  & F(\beta) \arrow[dd, "g"] &  &  & F(\alpha)              &  & F(\beta) \arrow[ll, "F(\texttt{corec})"]           \\
+    F(\alpha) \arrow[dd, "f"'] \arrow[rr, "F(\texttt{rec})"] &  & F(\beta) \arrow[dd, "g"'] &  &  & F(\alpha)              &  & F(\beta) \arrow[ll, "F(\texttt{corec})"']           \\
                                                              &  &                          &  &  &                        &  &                                                    \\
-    \alpha \arrow[rr, "\texttt{rec}"]                        &  & \beta                    &  &  & \alpha \arrow[uu, "c"] &  & \beta \arrow[uu, "d"] \arrow[ll, "\texttt{corec}"]
+    \alpha \arrow[rr, "\texttt{rec}"]                        &  & \beta                    &  &  & \alpha \arrow[uu, "c"] &  & \beta \arrow[uu, "d"] \arrow[ll, "\texttt{corec}"']
     \end{tikzcd}       
 \end{center}
 
@@ -107,10 +120,10 @@ A function \lean{f : F α → α}, for some fixed \emph{carrier} type \lean{α},
 
 
 Consider the type of natural numbers, \lean{Nat}; we'll show that the constructors for \lean{Nat} 
-constitute an initial algebra for functor the ${F_{nat}(α) = \lean{Unit} \mathop{⊕} α}$, where \lean{Unit} is the unit type with \lean{(unit : Unit)} as its sole inhabitant and \lean{⊕} denotes a sum (disjoint union). On functions $f : α → β$, the obvious choice of mapping operation $F(f) : F(α) → F(β)$ is such that $F(f)(\lean{unit}) = \lean{unit}$ and $F(f)(a) = f(a)$ for all $a : α$.
+constitute an initial algebra for functor the ${F_{nat}(α) = \lean{Unit} \mathop{⊕} α}$, where \lean{Unit} is the unit type with \lean{(unit : Unit)} as its sole inhabitant and \lean{⊕} denotes a sum. On functions $f : α → β$, the obvious choice of mapping operation $F(f) : F(α) → F(β)$ is such that $F(f)(\lean{unit}) = \lean{unit}$ and $F(f)(a) = f(a)$ for all $a : α$.
 
-Natural numbers are defined by a constant $0 : \lean{Nat}$ and a function $succ : \lean{Nat} → \lean{Nat}$.
-Let $f : F_{nat}(\lean{Nat}) → \lean{Nat}$ be the $F$-algebra defined as $f(\lean{unit}) = 0$ and $f(i) = succ(i)$ for all $i : \lean{Nat}$.
+Natural numbers are defined by a constant $0 : \lean{Nat}$ and a function $\mathrm{succ} : \lean{Nat} → \lean{Nat}$.
+Let $f : F_{nat}(\lean{Nat}) → \lean{Nat}$ be the $F$-algebra defined as $f(\lean{unit}) = 0$ and $f(i) = \mathrm{succ}(i)$ for all $i : \lean{Nat}$.
 
 Then, let $g : F_{nat}(α) → α$ be an arbitrary $F$-algebra, and define a function $\mathrm{rec} : \mathbb{N} → α$ such that $\mathrm{rec}(0) = g(\lean{unit})$ and  $\mathrm{rec}(n+1) = \mathrm{rec}(g(n))$, for every $n ∈ \mathbb{N}$.
 The inductive properties of \lean{Nat} are exactly what makes this algebra initial.
@@ -127,8 +140,8 @@ $\lean{corec: β → α}$ that makes the right square of \cref{fig:initial_alg_s
 Finally, the carrier of a final coalgebra corresponds to a coinductive type.
 
 
-Alternatively, we know that $α$ is the carrier of an initial $F$-algebra (resp. final $F$-coalgebra) and
-thus corresponds to an inductive (resp. coinductive) type iff it is the least (resp. greatest) 
+Alternatively, we know that $α$ is the carrier of an initial $F$-algebra (resp.\ final $F$-coalgebra) and
+thus corresponds to an inductive (resp.\ coinductive) type iff it is the least (resp.\ greatest) 
 fixpoint of $F$. We will also call these the \emph{fixpoint}, resp. \emph{cofixpoint}, of $F$.
 
 
@@ -137,7 +150,7 @@ Not all functors, though, have initial algebras, or final coalgebras.
 
 
 \section{Polynomial functors}
-Of special interest are \emph{polynomial functors}, which, intuitively, can be composed from a few primitive operations (such as constants, sums, products and exponentials).
+Of special interest are \emph{polynomial functors}, which, intuitively, can are created from just a few primitive operations (constants, sums, products, and exponentials).
 More formally, we say that a polynomial functor is defined by a set $A$ and an $A$-indexed family of sets $B_a$ as
 \[
     P(X) = \Sigma_{a ∈ A} B_a \rightarrow X  
@@ -146,24 +159,24 @@ That is, $P(X)$ is the disjoint union of all functions from $B_a$ to $X$, for ev
 In the theory, we generally still refer to functors that are not defined in this form, but are isomorphic to a polynomial functor in the strict sense, as polynomial.
 
 To encode this in Lean, we replace ``set'' with ``type'' and obtain the following.
-\footnote{To remain consistent, we will use Lean 4 syntax and naming conventions throughout the whole thesis, even though we are still discussing the formalizations as established by Avigad et al here. The difference with the Lean definitions presented in this chapter, and those presented in their original work are superficial.}
 \begin{leancode}
-    structure PFunctor := (A : Type) (B : A → Type)
+    structure PFunctor := (A : Type u) (B : A → Type u)
 \end{leancode}
 
 \begin{remark}
     \leanm{structure} is a simple wrapper around \inductive, for when there is only one constructor.
-    The above is equivalent to
+    The above type is equivalent to
     \begin{leancode}
         inductive PFunctor 
-        | mk : (A : Type) → (B : A → Type) → PFunctor
+        | mk : (A : Type u) → (B : A → Type u) → PFunctor
     \end{leancode}
+    Together with a projection function for each field.
 \end{remark}
 
 Then, the operations on types and functions are straightforward
 \begin{leancode}
     /-- Applying `P` to an object of `Type` -/
-    def PFunctor.Obj (P : PFunctor) (α : Type)
+    def PFunctor.Obj (P : PFunctor) (α : Type u)
         := Σ x : P.A, P.B x → α
 
     /-- Applying `P` to a morphism of `Type` -/
@@ -181,7 +194,7 @@ So an element of \lean{P.Obj α} is a (dependent) pair of a \emph{shape} $a ∈ 
 \subsection*{W-types}
 We already saw that inductive types are freely generated by the constructors. In a sense, an element of, e.g., \lean{Nat} is a well-founded (i.e., finite) tree with two kinds of nodes: \lean{zero} nodes are leaves, and \lean{succ} nodes have exactly one child.
 
-The \emph{W-type} of a polynomial functor \lean{P} is the type of exactly such trees: shapes $a ∈ A$ distinguish different kind of nodes, and the cardinality of $B_a$ determines the number of children nodes of type $a$ have. Such trees are easily encoded by an \inductive{} type.
+The \emph{W-type} of a polynomial functor \lean{P} is the type of exactly such trees: shapes $a ∈ A$ distinguish different kinds of nodes, and the cardinality of $B_a$ determines the number of children nodes of type $a$ have. Such trees are easily encoded by an \inductive{} type.
 
 \begin{leancode}
     inductive W (P : PFunctor)
@@ -190,7 +203,7 @@ The \emph{W-type} of a polynomial functor \lean{P} is the type of exactly such t
 
 By construction, the W-type of $P$ is its fixpoint, with \lean{W.mk} its initial algebra.
 
-It is important to make a distinction between types that \emph{are} polynomial functor, and types that are (equivalent to) W-types \emph{of} polynomial functors. 
+It is important to make a distinction between types that \emph{are} polynomial functors, and types that are (equivalent to) W-types \emph{of} polynomial functors. 
 For example, \lean{Nat} is not a polynomial functor, but it \emph{is} the W-type of a polynomial functor (namely, \lean{F$_\lean{nat}$}). 
 
 Conversely, \lean{List} is both. It is a polynomial functor: take $A = \mathbb{N}$ and $B_n = \{0,..,n-1\}$, then a list of $n$ elements is encoded as a pair with shape $n$, and content $f : \{0,..,n-i\}$ mapping each $i < n$ to the $i$-th element of the list. 
@@ -199,18 +212,18 @@ Simultaneously, \lean{List α}, for every \lean{α} is also the W-type of a \emp
 \subsection*{M-types}
 Coinductive types are similar, except that the trees they are represented by may be of infinite depth. Encoding these in Lean is quite a bit more involved.
 
-An \emph{M-type} of a polynomial functor \lean{P} is the type of potentially infinite depth trees, where shapes $a ∈ A$ distinguish different kind of nodes, and the cardinality of $B_a$ determines the number of children nodes of type $a$ have.
+An \emph{M-type} of a polynomial functor \lean{P} is the type of potentially infinite depth trees, where shapes $a ∈ A$ distinguish different kinds of nodes, and the cardinality of $B_a$ determines the number of children nodes of type $a$ have.
 
 An \emph{approximation} of an M-type up to depth $n$ is the type of such trees of height at most $n$, where any required subtrees at depth $n+1$ are replaced with a special ``continue'' leaf. 
 
 \begin{leancode}
-  /-- `CofixA P n` is an `n` level approximation of a M-type -/
+  /-- `CofixA P n` is an `n` level approximation of an M-type -/
   inductive CofixA (P : PFunctor) : Nat → Type u
   | continu : CofixA 0
   | intro {n} : (a : P.A) → (P.B a → CofixA P n) → CofixA P (succ n)
 \end{leancode}
 
-Then, we define what it means for approximations \emph{agree} --- either the first approximation must be a ``continue'' leaf, or both approximations have nodes of the same kind as root, and the corresponding subtrees recursively agree --- whence an M-type is just an infinite series of approximations of increasing depth where every approximation agrees with the next.
+Then, we define what it means for approximations \emph{agree} --- either the first approximation must be a ``continue'' leaf or both approximations have nodes of the same kind as root, and the corresponding subtrees recursively agree --- whence an M-type is just an infinite series of approximations of increasing depth where every approximation agrees with the next.
 
 \begin{leancode}
   inductive Agree : ∀ {n : Nat}, CofixA P n → CofixA P (n + 1) → Prop
@@ -241,7 +254,7 @@ Recall the example of multisets, defined as a quotient on lists.
 
 Polynomial functors cannot represent such quotients. Thus, we generalize to \emph{quotients} of polynomial functors, QPFs.
 
-Intuitively, a functor $F$ is the quotient of some polynomial functor $P$ when, there is a surjective \emph{natural transformation} \lean{abs} from $P$ to $F$. We can think of \lean{abs$_{α}$} as mapping abstract objects in $F(α)$ to their concrete representations in $P(α)$, for every $α$.
+Intuitively, a functor $F$ is the quotient of some polynomial functor $P$ when there is a surjective \emph{natural transformation} \lean{abs} from $P$ to $F$. We can think of \lean{abs$_{α}$} as mapping abstract objects in $F(α)$ to their concrete representations in $P(α)$, for every $α$.
 Recall that every functor is equipped with a mapping operation on functions $f : α → β$. To say that \lean{abs} is a natural transformation is to say that it respects this functorial structure. That is to say, the square of \cref{fig:nat_transform_square} should commute for all arrows $f : α → β$.
 \begin{figure}[]
     \begin{center}
@@ -261,7 +274,7 @@ Recall that every functor is equipped with a mapping operation on functions $f :
 Formally, we can show that \lean{abs} is surjective by providing, for every $α$, a function $\lean{repr}: F(α) → P(α)$ and proving that it is a right-inverse.
 This is specified in Lean with the \lean{QPF} typeclass.
 \begin{leancode}
-  class Qpf (F : Type → Type) [Functor F] where
+  class Qpf (F : Type u → Type u) [Functor F] where
     P        : PFunctor
     abs      : ∀ {α}, P.Obj α → F α
     repr     : ∀ {α}, F α → P.Obj α
@@ -269,7 +282,7 @@ This is specified in Lean with the \lean{QPF} typeclass.
     abs_map  : ∀ {α β} (f : α → β) (p : P.Obj α), 
                     abs (f <$> p) = f <$> abs p
 \end{leancode}
-Where \lean{f <\$> x} is Lean syntax for applying \lean{map$_\texttt{G}$ f} to \lean{x} --- the functor \lean{G} is inferred from the type of \lean{x}, \lean{abs\_repr} shows that \lean{repr} is a right-inverse of \lean{abs}, and
+Where \lean{f <\$> x} is Lean syntax for applying \lean{map$_\texttt{G}$ f} to \lean{x} (the functor \lean{G} is inferred from the type of \lean{x}), \lean{abs\_repr} shows that \lean{repr} is a right-inverse of \lean{abs}, and
 \lean{abs\_map} is the naturality condition of \lean{abs}.
 
 
@@ -287,77 +300,46 @@ a quotient of $P$'s M-type.
 
 
 
-
-
-\section{Type Universes}
-\label{sec:bg:universes}
-
-A big strength of Lean is that it treats types as first class. Just like \lean{0} is a value of type \lean{Nat}, the type \lean{Nat} is itself a \emph{value}, of type \Type{} (the ``type of types''). Because types are also values, \Type{} needs a type to live in as well. Setting \leanm{(Type: Type)} would lead to unsoundness, so instead, there is a notion of \emph{type universes}. We have that \leanm{Type : Type 1}, \leanm{Type 1 : Type 2}, and in general, \leanm{Type u : Type (u+1)}. In fact, \leanm{Type} is just a shorthand for \leanm{Type 0}, the smallest type universe.
-
-Universe levels are essentially natural numbers, but they are \textbf{not} first class values, and are indeed very different from elements of \leanm{Nat}.
-In particular, when writing \Typen{u}, the universe \lean{u} is \textbf{not} a normal term, there is a separate grammar, with some minimal builtin operations, that defines valid universe levels.
-
-We \emph{can} make our definitions generic over which universe to work in, this is called \emph{universe polymorphism}. The polymorphic definition of a polynomial functor looks like
-\begin{leancode}
-    universe u
-
-    structure PFunctor := (A : Type u) (B : A → Type u)
-\end{leancode}
-Where the first command declares that \lean{u} is a universe variable in subsequent definitions.
-When referring to \lean{PFunctor}, we can specify a universe to work in by writing \lean{PFunctor.\{u\}}. A similar syntax also introduces a universe variable that is local to a single definition.
-
-\begin{leancode}
-    def PFunctor.Obj.{v} (P : PFunctor.{v}) (α : Type v)
-        := Σ x : P.A, P.B x → α
-\end{leancode}
-
-Note that usually we don't have to be this explicit. Lean will usually infer the right universe levels, when left unspecified.
-For example, with \lean{map} as before, Lean recognizes that (with the new definition of \lean{PFunctor}) the implicit arguments \lean{α} and \lean{β} live in \Typen{u} and that \lean{P} is a \lean{PFunctor.\{u\}}, for some universe variable \lean{u}.
-\begin{leancode}
-    def PFunctor.map (P : PFunctor) (f : α → β) : P.Obj α → P.Obj β 
-        := fun ⟨a, g⟩ => ⟨a, f ∘ g⟩    
-\end{leancode}
-
-The other constructions are easily made universe polymorphic as well.
-
-
-
-
-
-
-
-
 \section{Multivariate Functors}
 \label{sec:mvfunctor}
 
 Earlier, we mentioned that sums and products (written as \lean{α ⊕ β} and \lean{α × β}, respectively, in Lean) are functorial in both arguments.
-They are, in fact, polynomial, but, both take two types as arguments and don't fit in the definitions presented so far. We have to generalize from the univariate case to \emph{multivariate} functors.
+Yet, the definitions presented so far only allow for functors to have a single argument.
+We have to generalize from the univariate case to \emph{multivariate} functors.
 
-It is difficult to reason about $n$-ary curried functions, where $n$ is arbitrary, so instead we use the following, \emph{uncurried} representation of multivariate, universe polymorphic, type functions.
+It is difficult to reason about $n$-ary curried functions, where $n$ is arbitrary, so instead an \emph{uncurried} representation of multivariate, universe polymorphic, type functions is used.
 
 \begin{leancode}
     def TypeFun (n : Nat) := (TypeVec.{u} n) → Type v
 \end{leancode}
-Where \lean{TypeVec} is a \emph{type vector}, i.e., a list of exactly $n$ elements of \Typen{u}.
-We define such vectors as a map from a canonical finite type \lean{Fin2 n}, which has exactly $n$ inhabitants.
+Where \lean{TypeVec} (short for \emph{type vector}) conceptually is a list of exactly $n$ elements of \Typen{u}.
+We define type vectors as functions from a canonical finite type \lean{Fin2 n}, which has exactly $n$ inhabitants,
+to types.
 \begin{leancode}
     def TypeVec (n : Nat) := (i : Fin2 n) → Type u
 \end{leancode}
-Notice that all arguments to a \lean{TypeFun} live in the same universe $u$, and the result lives in a potentially different universe $v$. 
-Most constructions do require that these universes coincide, and use \lean{TypeFun.\{u,u\}}.
+Notice that all arguments to a \lean{TypeFun} live in the same universe $u$, but the result lives in a potentially different universe $v$. 
+Most constructions require that these universes coincide, which can be written as \lean{TypeFun.\{u,u\}}.
 
-Suppose that \lean{Sum'} is the uncurried version of sums, then we would write \lean{Sum' ![α₁, α₂]} to use it with argument types α₁ and α₂ The \lean{map} operation now takes not one function, but a vector (i.e., list of known size) of $n$ functions, each going from \lean{αᵢ} to \lean{βᵢ}. The type of such vectors of functions is written, e.g, \lean{![α₁, α₂] ⟹ ![β₁, β₂]} (when $n=2$).
+Suppose that \lean{Sum'} is the uncurried version of sums, then \lean{Sum' ![α₁, α₂]} would mean \lean{α₁ ⊕ α₂}.
+A multivariate \lean{map} operation now takes not one function, but a vector of $n$ functions, each going from \lean{αᵢ} to \lean{βᵢ}. We define the type of such vectors of functions as,
+\begin{leancode}    
+    def Arrow (v₁ v₂ : TypeVec n) := (i : Fin2 n) → (v₁ i → v₂ i)
+\end{leancode}  
+We generally write \lean{v₁ ⟹ v₂} instead of \lean{Arrow v₁ v₂}, leading to the following signature
+for multivariate \lean{map}.
 
 \begin{leancode}
     map : {v₁ v₂ : TypeVec n} → (v₁ ⟹ v₂) → F v₁ → F v₂
 \end{leancode}
 \begin{remark}
-    Objects of type \lean{TypeVec n}, for some fixed but arbitrary length $n$, and morphisms \leanm{(⋅ ⟹ ⋅)} form a category. 
-    Multivariate type functors are in fact nothing more than (univariate) functors on this category of type vectors.
+    Objects of type \lean{TypeVec n}, for some fixed but arbitrary length $n$, and arrows \leanm{(⋅ ⟹ ⋅)} form a category. 
+    Multivariate type functors are in fact nothing more than (univariate) functors from the category of type vectors to the category of types.
 \end{remark}
 
 Thus, if \lean{f₁ : α₁ → β₁} and \lean{f₂ : α₂ → β₂}, then \lean{Sum'.map ![f₁, f₂]} yields a function from \lean{Sum' ![α₁, α₂]} to \lean{Sum' ![β₁, β₂]}.
-The functoriality constraints have an obvious generalization to the multivariate case.
+
+Finally, the functoriality constraints have an obvious generalization to the multivariate case.
 
 \subsection*{Multivariate Polynomial Functors}
 An $n$-ary, polynomial functor is still defined with a shape $A$ as before, but the content now maps $a ∈ A$ not to a single type, but to a vector of $n$ types.
@@ -380,7 +362,7 @@ The generalization proceeds relatively straightforwardly.
 Where \lean{TypeVec.comp} is the pointwise composition of two vectors of functions.
 
 \begin{remark}
-    Implicit variables are not limited to types, we will use \lean{n} and \lean{m} for natural numbers and \lean{v,v₀, v₁, ...} for type vectors.
+    Implicit variables are not limited to types, we will use \lean{n} and \lean{m} for natural numbers and \lean{v, v₀, v₁, ...} for type vectors.
 \end{remark}
 
 The generalization of M and W-types to the multivariate case is left as an exercise for the reader.

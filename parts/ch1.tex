@@ -17,7 +17,7 @@ In Lean, new datatypes are generally defined using the \inductive{} keyword, whi
 Read as follows: \lean{List} has two \emph{constructors}, i.e., ways to construct a list.
 \lean{List.nil} is a constant
 representing the empty list; 
-\lean{List.cons head tail}, where \lean{head} is of type \lean{α} and \lean{tail} is another list, represents the operation of adding a new element to the front of an existing list. Notice also that \lean{α} is a type parameter, meaning that the list is generic over the type its elements; \lean{List Nat} is a list of natural numbers, while \lean{List String} is a list of strings.
+\lean{List.cons head tail}, where \lean{head} is of type \lean{α} and \lean{tail} is another list, representing the operation of adding a new element to the front of an existing list. Notice also that \lean{α} is a type parameter, meaning that the list is generic over the type of its elements; \lean{List Nat} is a list of natural numbers, while \lean{List String} is a list of strings.
 
 From this description, the datatype is freely generated, as codified by the characteristic principles that are automatically added by the \inductive{} command.
 The \emph{principle of no confusion} states that different combinations of constructors yield distinct elements of the inductive type, and the \emph{recursion principle} embodies structural recursion on that type. For instance, the following is a simplified signature of a recursion principle for lists:
@@ -54,7 +54,7 @@ To address this, Avigad \etal{}\ describe a framework for defining \emph{coinduc
 basing their constructions on the category theoretical notion of \emph{quotients of polynomial functors} (QPF).
 They also provide a formalization of their work in Lean 3~\cite{avigadDataTypesQuotients2019a}.
 However, to define a (co)datatype using this framework directly, a user has to hand-compile their specification 
-into the provided fundamental operations, making it neither definitional, nor ergonomic to use.
+into the provided fundamental operations, making it neither definitional nor ergonomic to use.
 
 The main contribution of this thesis is the description, and prototype implementation, of \data{} and \codata{} macros, enabling users to write a (co)datatypes specification with the familiar, and more convenient, syntax of \inductive{}, which is then automatically compiled into the appropriate constructions on QPFs.
 The implementation of these macros was done in Lean 4; I ported the existing formalization by Avigad \etal\ to this newer version of Lean.
@@ -128,7 +128,7 @@ We'd like to be able to use \lean{Multiset} to define the type of unordered tree
 \end{badleancode}
 
 Yet, this definition won't compile; it is not allowed to nest a recursive occurrence of \lean{UnorderedTree}
-behind a quotient type. Lean's builtin inductive and quotient types do not compose well.
+behind a quotient type. Lean's built-in inductive and quotient types do not compose well.
 
 
 As the name suggests, QPFs also support a notion of quotient types. Our datatype package does not yet

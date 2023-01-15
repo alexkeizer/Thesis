@@ -7,12 +7,12 @@
 \label{ch:implementing}
 
 
-In the preceding chapter we explored how to translate a definitional specification of a (co)datatype to the fundamental constructions that can encode that (co)datatype as a QPF.
+In the preceding chapter, we explored how to translate definitional specifications of (co)datatypes to the fundamental constructions that can encode (co)datatypes as QPFs.
 In the current chapter, we will discuss the technical details of implementing this procedure in Lean 4, as \data{}
 and \codata{} macros.
 
-To that end, we're going to dig deeper into the technical details of the metaprogramming system.
-We still don't assume knowledge of Lean, specifically, but we do require some more familiarity with functional programming (roughly, readers should be familiar with monads, and how they are used for side effects)~\cite{ullrichNotationsHygienicMacro2022,paulinoMetaprogrammingLean}.
+To that end, we're going to dig deeper into the technical details of the meta-programming system.
+We still don't assume knowledge of Lean specifics, but we do require some more familiarity with functional programming (roughly, readers should be familiar with monads, and how they are used for side effects)~\cite{ullrichNotationsHygienicMacro2022,paulinoMetaprogrammingLean}.
 
 
 \section{Extending Lean's syntax}%
@@ -31,7 +31,7 @@ Actually, this \keyword{macro} declaration is just syntactic sugar for the follo
 \end{leancode}
 
 Firstly, \keyword{syntax} defines a \emph{parser extension}.
-Lean's grammar does not have a clearly deliminated macro invocation syntax, instead,
+Lean's grammar does not have a clearly delimited macro invocation syntax, instead,
 macros can freely extend Lean's syntax, influencing how the parser transforms source code into an \emph{abstract syntax tree} (AST).
 The result of parsing, this AST, is represented in Lean as an object of type \lean{Syntax}.
 
@@ -44,11 +44,11 @@ The result of parsing, this AST, is represented in Lean as an object of type \le
 In this example, the parser extension states that three terms (bound to \lean{Γ}, \lean{e} and \lean{t}), interspersed with \lean{⊢} and \lean{:} symbols form a new term.
 
 Then, the \keyword{macro\_rules}
-part defines the \emph{semantics} of the macro, as a substitution. We both match on, and create new syntax trees, using \emph{syntax quotations} (written as \lean{`()}). We can use a variable of type \lean{Syntax} in a syntax quotation as, e.g, \lean{`(\$Γ)}, this is called an \emph{anti-quotation}. By substituting on the level of syntax trees, grouping and precedence is preserved. For example, \lean{Γ ⊢ 1 + 2 * 3 : Nat} is correctly translated
+part defines the \emph{semantics} of the macro, as a substitution. We both match on, and create new syntax trees, using \emph{syntax quotations} (written as \lean{`()}). We can use a variable of type \lean{Syntax} in a syntax quotation as, e.g, \lean{`(\$Γ)}, this is called an \emph{anti-quotation}. By substituting on the level of syntax trees, grouping and precedence are preserved. For example, \lean{Γ ⊢ 1 + 2 * 3 : Nat} is correctly translated
 to \lean{Typing Γ (1 + 2 * 3) Nat}.
 
 Clearly, though, \data{} and \codata{} would be hard to define in terms of such substitutions.
-We could, in theory, replace the right hand side of a \keyword{macro\_rules} match arm 
+We could, in theory, replace the right-hand side of a \keyword{macro\_rules} match arm 
 with arbitrary code that produces a \lean{Syntax} object, and in this way, define a \emph{procedural macro}.
 This is, however, not idiomatic, procedural macros are usually defined as an \emph{elaborator}.
 
@@ -56,9 +56,9 @@ This is, however, not idiomatic, procedural macros are usually defined as an \em
 \subsection*{Data and Codata Syntax}%
 \label{subsec:impl:syntax}
 
-Before we get to what an elaborator is, we'll take a few steps back and consider how, to define the parser extensions for \data{} and \codata{}.
+Before we get to what an elaborator is, we'll take a few steps back and consider how to define the parser extensions for \data{} and \codata{}.
 
-The flexibility and extensibility of Lean is not just for users. The Lean 4 compiler is mostly written in Lean 4 itself, and it turns out that a lot of the language syntax is implemented as macros. Amongst them, \inductive{}.
+The flexibility and extensibility of Lean are not just for users. The Lean 4 compiler is mostly written in Lean 4 itself, and it turns out that a lot of the language syntax is implemented as macros. Amongst them, \inductive{}.
 
 The following is the definition of the \inductive{} syntax.
 \begin{leancode}
@@ -75,7 +75,7 @@ Where \lean{declId}, \lean{optDeclSig}, etc. are all parsers, or parser combinat
     reserved keywords as identifiers.
 \end{remark}
 
-This way of defining a parser extension is lower-level than the \keyword{syntax} declaration we saw before, but very similar: this parser accepts an ``inductive'' \emph{atom} (or, literal), followed by a declaration id (\lean{declId}), an optional signature (\lean{optDeclSig}), optionally a `` :='' or ``where'' atom, followed by zero or more (\lean{many}) constructor specifications (\lean{ctor}), and finally, an optional list of typeclasses to derive (\lean{optDeriving}).
+This way of defining a parser extension is lower-level than the \keyword{syntax} declaration we saw before, yet, very similar: this parser accepts an ``inductive'' \emph{atom} (or, literal), followed by a declaration id (\lean{declId}), an optional signature (\lean{optDeclSig}), optionally a `` :='' or ``where'' atom, followed by zero or more (\lean{many}) constructor specifications (\lean{ctor}), and finally, an optional list of typeclasses to derive (\lean{optDeriving}).
 
 This \lean{Parser} instance is then used in the \lean{declaration} parser.
 \begin{leancode}
@@ -103,7 +103,7 @@ We want \data{} to be (mostly) suitable as a drop-in replacement for \inductive{
 \end{leancode}
 
 \begin{remark}
-    The syntax highlighting is slightly misleading. At this point the parser does not know about \data{} and \codata{} as commands yet, so they don't need to be enclosed with \lean{«...»} brackets to be used as identifier.
+    The syntax highlighting is slightly misleading. At this point the parser does not know about \data{} and \codata{} as commands yet, so they don't need to be enclosed with \lean{«...»} brackets to be used as identifiers.
 \end{remark}
 
 Since we are not defining builtin syntax, we use the \lean{commandParser} attribute to define the parser extension
@@ -115,7 +115,7 @@ instead of \lean{builtinCommandParser}.
 \end{leancode}
 
 
-After this definition Lean knows how to successfully parse datatype specifications such as
+After this definition, Lean knows how to successfully parse datatype specifications such as
 \begin{badleancode}
   data Foo α
     | foo : α → Foo α
@@ -140,21 +140,22 @@ Although this syntax is accepted by the \data{} parser, we don't actually suppor
 
 Removing the \lean{>> optDeriving} part from the parser definition would bring the accepted syntax closer to what is actually supported, making \lean{Foo} as written above lead to a generic parse error.
 
-However, the user is clearly trying to invoke our \data{} macro, and \inductive{} does support such a \keyword{deriving} statement, so it is to be expected that users will try to use it. The generic parse errors are quite obscure, and bad at communicating to the user that \keyword{deriving} statements are not supported; a user might reasonably think the parse error is because of some (non-existent) typo.
+However, the user is clearly trying to invoke our \data{} macro, and \inductive{} does support such a \keyword{deriving} statement, so it is to be expected that users will try to use it. The generic parse errors are quite obscure and bad at communicating to the user that \keyword{deriving} statements are not supported; a user might reasonably think the parse error is because of some (non-existent) typo.
 
-So instead, we have the parser accept exactly the same syntax as \inductive{}, and in the \emph{elaborator} we then throw a custom, informative error when a user tries use syntax which parser, but is unsupported.
-In this way, \data{} is truly a drop-in replacement for \inductive{}, syntax-wise, and any errors will guide the user and explain unsupported syntax.
+So instead, we have the parser accept exactly the same syntax as \inductive{}, and in the \emph{elaborator} we then throw a custom, informative error when a user tries to use syntax which parses but is unsupported.
+In this way, \data{} is truly a drop-in replacement for \inductive{}, syntax-wise, and any errors will guide the user and explain the unsupported syntax.
 
 
 
 \section{Defining the Semantics of a Macro}
 With the parser extension in place, the next step is to define an elaborator.
-We already mentioned that the two main syntax categories are terms and commands, each has their own kind of elaborator.
+We already mentioned that the two main syntax categories are terms and commands.
+Both have a slightly different kind of elaborator.
 
 Terms are translated to expressions in the core logic of Lean (as encoded by the \lean{Expr} type). A \emph{term elaborator} is thus a function \lean{Syntax → TermElabM Expr}, where \lean{TermElabM} is the term elaboration monad. This monad gives (read-only) access to the \emph{environment} (i.e., declarations and imports that the term can refer to) and \emph{metavariable context} (roughly speaking, a metavariable represents a hole in the program that should be synthesized/inferred at some point during compilation).
 
 
-Commands, on the other hand, are not translated, but used for their side effect. Hence, the type of a \emph{command elaborator} is \lean{Syntax → CommandElabM Unit}, where the \lean{CommandElabM} monad allows for four kinds of side effects: 
+Commands, on the other hand, are not translated but used for their side effect. Hence, the type of a \emph{command elaborator} is \lean{Syntax → CommandElabM Unit}, where the \lean{CommandElabM} monad allows for four kinds of side effects: 
 \begin{enumerate}
     \item Modifying the environment (e.g., \inductive{}, \keyword{def}, \keyword{theorem}),
     \item Logging messages to inform the user (e.g., \lean{\#check}, \lean{\#print}, \lean{\#eval}),
@@ -162,7 +163,7 @@ Commands, on the other hand, are not translated, but used for their side effect.
     \item Throwing errors
 \end{enumerate}
 
-Although \lean{TermElabM} neither extends, nor is extended by \lean{CommandElabM}, it is common to elaborate terms in a command elaborator, e.g., by using \lean{liftTermElabM} or \lean{runTermElabM}.
+Although \lean{TermElabM} neither extends nor is extended by \lean{CommandElabM}, it is common to elaborate terms in a command elaborator, e.g., by using \lean{liftTermElabM} or \lean{runTermElabM}.
 
 
 \subsection*{Registering}
@@ -185,11 +186,11 @@ Elaboration starts in the generic declaration elaborator, which checks what the 
 
 This \lean{InductiveView} is a thin wrapper around the syntax tree, allowing us to refer to the different parts of an inductive declaration by name, rather than offset, but crucially, still stores, e.g., constructor types as \lean{Syntax} objects.
 
-At this point, auto bound implicit variables are added, the constructor type terms are elaborated, and type universes are inferred (if needed), to produce a \lean{InductiveType} object. 
+At this point, auto-bound implicit variables are added, the constructor type terms are elaborated, and type universes are inferred (if needed), to produce a \lean{InductiveType} object. 
 Finally, the \lean{InductiveType} is wrapped in a \lean{Declaration}, added to the environment, and auxiliary constructions are generated with \lean{mkAuxConstructions}.
 
 
-Most of this work, obviously beside the steps that add inductive declarations to the environment, is also relevant for \data{} and \codata{} declarations.
+Most of this work, obviously besides the steps that add inductive declarations to the environment, is also relevant for \data{} and \codata{} declarations.
 
 An attempt was made to copy the code of \lean{elabInductiveViews} (and all private or protected functions it called) and factor out all work that is relevant for both \inductive{} and \data{}/\codata{} declarations into a common function.
 However, it turned out that some of the elaboration steps to produce the \lean{InductiveType} object were not desirable for then running the procedure of \cref{ch:procedure} on.
@@ -208,8 +209,8 @@ For example, type parameters are added to constructor types as implicit argument
 Whereas we would like to give as input to the procedure just (expressions corresponding to) types \lean{α → β → Foo α β} and \lean{{β : Type} → α → β → Bar α}.
 It is, of course, possible to detect which of the implicit argument are type parameters, by looking at which variables are passed to \lean{Foo}, resp. \lean{Bar}, but this adds complexity.
 
-In the end, making the required changes was deemed to be too much engineering effort. 
-Since the implementation is intended purely as prototype, a simpler approach was taken, namely, to 
+In the end, the required changes were deemed to require too much engineering effort. 
+Since the implementation is intended purely as a prototype, a simpler approach was taken, namely, to 
 perform most steps of the procedure on the level of syntax, rather than elaborated expressions. 
 The composition pipeline is an exception, for that step we do have to elaborate terms into \lean{Expr}.
 
@@ -268,18 +269,18 @@ The code to do so might look like the following
 Of special interest is the \lean{`(ctor| ...)} syntax quotation, which specifies that the syntax should be parsed with the \lean{ctor} parser. 
 
 The shape of the syntax tree produced by a quotation is determined statically, not at runtime, so the parser cannot examine the values of the \lean{ctorIdent} and \lean{ident} anti-quotations, it treats them as opaque blobs of syntax. We have to help it a bit by specifying the syntax category explicitly, as \lean{:ident}.
-Similarly, in the final \inductive{} syntax quotation, we specify that \lean{ctors} is an array of syntax of the \lean{ctor} category.
+Similarly, in the final \inductive{} syntax quotation, we specify that \lean{ctors} is an array of syntax trees of the \lean{ctor} category.
 
 \begin{remark}
     With the overhaul we mentioned at the start of this section, syntax categories are now tracked in the 
     type system, making such hints obsolete in newer versions of Lean.
 \end{remark}
 
-The \lean{\$[...]*} part is called a \emph{splice}, and it allows us to use an array of syntax objects whenever a parser expects a whitespace separated list of things (as is the case with the \lean{many} parser combinator used in the \inductive{} parser).
+The \lean{\$[...]*} part is called a \emph{splice}, and it allows us to use an array of syntax objects whenever a parser expects a whitespace-separated list of things (as is the case with the \lean{many} parser combinator used in the \inductive{} parser).
 
-Also take note that we have to create the identifier \lean{Baz} with the \lean{mkIdent} function if
-we want it to be accessible. By default, Lean's macros are \emph{hygienic} (see \cite{ullrichNotationsHygienicMacro2022}),
-meaning that an identifier \lean{Baz} written directly into a syntax quotation is not actually accessible outside of the macro, so that they don't accidentally clash or shadow other identifiers at the call-site. The \lean{mkIdent} function allows us to opt-out of hygiene, so that the identifier is just \lean{Baz} as intended.
+Take note that we have to create the identifier \lean{Baz} with the \lean{mkIdent} function if
+we want it to be accessible. By default, Lean's macros are \emph{hygienic} (see~\cite{ullrichNotationsHygienicMacro2022}),
+meaning that an identifier \lean{Baz} written directly into a syntax quotation is not actually accessible outside of the macro, so that they don't accidentally clash or shadow other identifiers at the call-site. The \lean{mkIdent} function allows us to opt out of hygiene making sure the identifier is just \lean{Baz} as intended.
 
 
 
@@ -288,7 +289,7 @@ meaning that an identifier \lean{Baz} written directly into a syntax quotation i
 
 
 
-\section{Implementing the Elaborator}
+\section{Implementing the Elaborator}%
 \label{sec:implementing}
 
 Now that we have a general idea of the meta-programming system of lean, and a high-level implementation strategy, let us 

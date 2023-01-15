@@ -1,5 +1,5 @@
 
-\chapter{Future considerations / current limitations}
+\chapter{Future considerations / current limitations}%
 \label{ch:limitations}
 
 
@@ -9,7 +9,7 @@ additions that seem useful.
 
 \section{Universe Polymorphism}
 
-Recall from \ref{sec:shape_types} that the procedure starts with synthesizing a ``head'' type that
+Recall from~\cref{sec:shape_types} that the procedure starts with synthesizing a ``head'' type that
 looks roughly like the following:
 \begin{leancode}
   inductive HeadT
@@ -63,7 +63,7 @@ However, because of how these are defined, their signature is quite obscure and 
   --       (x : MvQpf.Fix List.Internal α) → β x
 \end{leancode}
 
-In constrast, the \inductive{} version of \lean{List} defines its recursion principle as
+In contrast, the \inductive{} version of \lean{List} defines its recursion principle as
 \begin{leancode}
   def List.rec {α : Type _} {motive : QpfList α → Sort _} :
   motive QpfList.nil 
@@ -113,7 +113,7 @@ produce different elements.
 
 
 \section{User-friendly (co)recursion and (co)induction}
-If we just want do structural recursion on a single variable, it's relatively easy to do so directly
+If we just want to do structural recursion on a single variable, it's relatively easy to do so directly
 in terms of the fundamental recursion principle.
 For example, determining the length of a list.
 \begin{leancode}
@@ -131,8 +131,14 @@ on multiple variables, with support for termination hints for when it fails to a
 termination.
 
 It would be interesting to see if the existing equation compiler mechanisms can be re-used
-to also provide a high-level way of defining (co)recursive functions for QPFs, so that users can write
-recursive functions on qpf-based datatypes in the same as they would for a regular \inductive{} type.
+to also provide a high-level way of defining recursive functions for QPFs, so that users can write
+recursive functions on QPF-based datatypes in the same as they would for a regular \inductive{} type.
+
+The dual of termination of recursive functions is productivity of corecursive functions.
+\emph{Guarded corecursion} is The trivially productive analogue of structured recursion, 
+and supporting an easy syntax for defining guarded corecursive functions would be a great first step.
+Further steps might focus on a more general strategy for proving productivity of non-guarded corecursion,
+similar to termination hints for recursive functions.
 
 % \subsection*{Coinduction}
 

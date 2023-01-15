@@ -4,7 +4,7 @@
 
 This chapter will establish a procedure that transforms a specification of a (co)datatype
 into the proper constructions on QPFs.
-It will do so in the abstract, focusing on the details of the procedure, rather than implementation
+It will do so in the abstract, focusing on the details of the procedure, rather than the implementation
 details of the Lean meta-programming system (which will be covered in the next chapter).
 
 
@@ -36,8 +36,8 @@ They are also examples of what we will call \emph{shape} types.
     A \emph{shape} type is an inductive type \leanm{Foo α_1, ..., α_n}, 
     where each constructor takes only arguments of types in $\{α_1, ..., α_n\}$.
 \end{definition}
-That is, each constructor's arguments must be typed as one of the parameters to the shape type.
-Let's make this a bit clearer by look at examples that are \textbf{not} shape types. 
+That is, each constructor's arguments must be typed as one of the parameters of the shape type.
+Let's make this a bit clearer by looking at examples that are \textbf{not} shape types. 
 
 %LEAN namespace BadExample
 \begin{leancode}
@@ -76,7 +76,7 @@ Recall that (multivariate) polynomial functors are defined as
 
 
 Let us return to the example of sum and product types. 
-For the ``head'' type (\leanm{A}), we will take a type that has exactly as many constructor as
+For the ``head'' type (\leanm{A}), we will take a type that has exactly as many constructors as
 the shape type, but such that each constructor is a constant (i.e., takes no arguments).
 Note that the head type does not take any type parameters. 
 
@@ -98,7 +98,7 @@ Note that the head type does not take any type parameters.
 
 The ``child'' family of types maps each constructor $c$ to a vector of types \leanm{α_c}.
 What is most important is the cardinality of each type \leanm{α_c i}, 
-because that is what determines the number of arguments of the $i$-th type parameter are needed
+because that is what determines the number of arguments of the $i$-th type parameter needed
 to use constructor $c$. 
 
 The concrete structure of these types is not relevant, so we'll always use \leanm{PFin2 m} (see \cref{sec:enhance:pfin2}), the type
@@ -140,7 +140,7 @@ Using the counts of \cref{fig:ctor_bookkeepping}, we define the child family of 
 \end{center}
 
 \begin{remark}
-    If Lean knowns which type to expect, say \lean{Sum.HeadT}, and we write an identifier with a leading
+    If Lean knows which type to expect, say \lean{Sum.HeadT}, and we write an identifier with a leading
     dot, like \lean{.inl}, then it will automatically add the type as namespace, concluding that
     we must mean \lean{Sum.HeadT.inl}.
 \end{remark}
@@ -154,7 +154,7 @@ We'll show it just for \lean{Sum}.
     def QpfSum : Type → Type → Type := TypeFun.curried QpfSum.Uncurried
 \end{leancode}
 
-And we're done! However, these qpf-based versions of the types are still not very nice to use.
+And we're done! However, these QPF-based versions of the types are still not very nice to use.
 For example, if we want to construct a pair in \leanm{QpfProd}, we have to go through \leanm{MvPFunctor.mk},
 which encodes its arguments in a not user-friendly way. 
 Namely, to construct \lean{Sum α β} from an \lean{(a : α)}, i.e., use the \lean{inl} constructor, 
@@ -190,17 +190,13 @@ Recall that we defined vectors of size $n$ as functions \lean{PFin2 n → α}, s
 \end{leancode}
 
 
-We could expose these constructors, but the inner details will still be exposed
+We could define these constructors, but the inner details will still be exposed
 when a user tries to destruct an element of \lean{QpfSum α β}.
-Clearly, this is not an ideal definition.
 
 \subsection{MvQpf.ofPolynomial}
-The solution is to not reinvent the wheel quite as much.
-The \leanm{inductive} version of \lean{Sum} and \lean{Prod} works perfectly fine,
-since shape types are non-recursive and non-composite by definition.
-
-In fact, the goal of this part of the procedure is not to redefine shape types, it is to show that
-they are QPFs by deriving an instance of \lean{MvQpf}.
+Because of the simplicity of shape types, notably the lack of any coinduction or composition, they can just be defined as 
+\inductive{} types. The only reason we bother with deriving a polynomial functor is to show that
+the shape type is a QPFs (i.e., to provide an instance of \lean{MvQpf}).
 
 It stands to reason that if $P$ is a polynomial functor, and $F$ is isomorphic to $P$, then $F$ is at
 the very least a QPF, this is formalized by \lean{MvQpf.ofPolynomial}.
@@ -216,12 +212,11 @@ the very least a QPF, this is formalized by \lean{MvQpf.ofPolynomial}.
                   : MvQpf F
 \end{leancode}
 
-In the case of our \lean{Sum} example, we're instantiating \lean{ofPolynomial} with 
+In the case of our \lean{Sum} example, we instantiate \lean{ofPolynomial} with 
 \lean{F := TypeFun.ofCurried Sum} and \lean{P := Sum.P}.
-
 To generate \lean{box} and \lean{unbox} we expand our bookkeeping a bit. For each constructor argument
-we generate a fresh identifier, and while doing so we keep two lists: a list of all identifiers, in the
-order they were introduced, and a separate list for each parameter type, with just the identifiers for that type.
+we generate a fresh identifier, and while doing so we keep two lists: a list of all identifiers, in 
+the order they were introduced, and a separate list for each parameter type, with just the identifiers for that type.
 
 To illustrate, consider the following, slightly artificial, type
 \begin{leancode}
@@ -284,7 +279,7 @@ Logically, \lean{unbox} does the reverse,
           | .pairCandB  => SumOfPairs.pairCandB (child 0 0) (child 1 0)
   \end{leancode}
 
-The proof that these two functions are indeed inverses is a straightforward mix of case distinction and reflexivity.
+The proof that these two functions are inverses is a straightforward mix of case distinction and reflexivity.
 
 
 
@@ -293,9 +288,9 @@ The proof that these two functions are indeed inverses is a straightforward mix 
 
 \section{Recursive and corecursive types}%
 \label{sec:rec_types}
-If a type is recursive, but otherwise does not mention other types it is not strictly a shape type,
+If a type is recursive but otherwise does not mention other types, it is not strictly a shape type,
 but we can transform it into one.
-Namely, by adding an extra type parameter \lean{ρ} and substituting \lean{ρ} for all (co)recursive occurences of the type
+Namely, by adding an extra type parameter \lean{ρ} and substituting \lean{ρ} for all (co)recursive occurrences of the type
 to be defined.
 
 For example, the shape of \lean{List α} (see \cref{sec:shape_types}) is
@@ -314,11 +309,11 @@ To get rid of the extra variable \lean{ρ}, we simply take the fixpoint.
 Conversely, suppose we wish to define \lean{CoList}, the \emph{coinductive} type of potentially infinite lists.
 We introduced this type in the introduction with the following specification.
 \begin{leancode}
-  inductive CoList α
+  codata CoList α
     | nil  : CoList α
     | cons : α → CoList α → CoList α
 \end{leancode}
-There is no difference in the procedure to obtain the corresponding shape, we just replace all occurences
+There is no difference in the procedure to obtain the corresponding shape, we just replace all occurrences
 of \lean{CoList α} as constructor argument type with a new type parameter \lean{ρ}, obtaining the exact same shape
 as for \lean{List}.
 \begin{leancode}
@@ -339,7 +334,7 @@ But rather than taking the fixpoint, we take the \emph{cofixpoint} for a coinduc
 \section{Composition pipeline}%
 \label{sec:comp_pipeline}
 The running example for this section will be the rose tree; leaves are labelled with \lean{α}, while
-internal nodes are labelled with \lean{β} and can have an finite, non-zero number of children.
+internal nodes are labelled with \lean{β} and can have a finite, non-zero number of children.
 \begin{leancode}
   data QpfTree α β
     | leaf : α → QpfTree α β
@@ -367,7 +362,7 @@ Then, proceed as in \cref{sec:shape_types} to show that \lean{QpfTree.Shape} is 
 
 \begin{remark}
   When doing this substitution, we can reuse the same parameter for multiple occurrences of the same type.
-  Suppose we had a constructor that takes two list, like
+  Suppose we had a constructor that takes two lists, like
   %LEANIGNORE
   \begin{leancode}
     | node₂ : β → ρ → QpfList ρ → QpfList ρ → QpfTree α β ρ
@@ -380,7 +375,7 @@ Then, proceed as in \cref{sec:shape_types} to show that \lean{QpfTree.Shape} is 
   
   On the other hand, if a non-parameter type also occurs as a subexpression of another type, then
   we will not substitute it with the same parameter.
-  The example gets a bit contrived, but suppose nodes take both a list of children, and a nested list 
+  The example gets a bit contrived, but suppose nodes consist of both a list of children and a nested list 
   of lists of children.
   %LEANIGNORE
   \begin{leancode}
@@ -393,7 +388,7 @@ Then, proceed as in \cref{sec:shape_types} to show that \lean{QpfTree.Shape} is 
   \end{leancode}
   Where \lean{σ₁} stands for \lean{QpfList ρ}, as before, and \lean{σ₂} stands for \lean{QpfList (QpfList ρ)}, \emph{not} \lean{QpfList σ₁}.    
   
-  Do note that this does \emph{not} apply when we are adding a new parameter (such as \lean{ρ} in our example) for recursive occurences in the very first step (to obtain the \lean{Nonrecursive} specification), such variables \emph{do} get substituted in all subexpressions.
+  Do note that this does \emph{not} apply when we are adding a new parameter (such as \lean{ρ} in our example) for recursive occurrences in the very first step (to obtain the \lean{Nonrecursive} specification), such variables \emph{do} get substituted in all subexpressions.
   \end{remark}
 
 Returning to \lean{QpfTree.Shape}, parameter \lean{σ₁} is supposed to stand for \lean{QpfList ρ}, so we're aiming to define a QPF \lean{Base} which satisfies:
@@ -436,7 +431,7 @@ of equation. For example, it is impossible to define a QPF that satisfies
   qpf H α β := α → β 
 \end{badleancode}
 Because the arrow type constructor \lean{(⋅ → ⋅)} is \emph{not} functorial. 
-At least, it is not functorial in both arguments. If, instead, we fix any value \lean{α} for the
+At least, it is not functorial in both arguments. If instead, we fix any value \lean{α} for the
 first argument, we obtain \lean{(α → ⋅)}, which \emph{is} a QPF.
 More generally, we say that in \lean{α → β}, α is a \emph{dead} variable, since it occurs as a non-functorial argument, while β is a \emph{live} variable.
 
@@ -459,13 +454,12 @@ Continuing on, the composition pipeline does support these three kinds of functo
 \end{itemize}
 
 This notably excludes dependent arrows \lean{(a : α) → \_}, anonymous functions \leanm{fun γ => _},
-and applications of non-QPFs (such as non-dependent arrows (⋅ → ⋅) in its general form).
+and applications of non-QPFs (such as \lean{α → β} when \lean{α} is a live parameter).
 
 
 
-Projections are trivial to identify (see \lean{G₁}, \lean{G₂} and \lean{G₃} from the example before), 
-and are represented with \lean{MvQpf.Prj n i}, where $n$ is the arity and $i$ the index
-of the parameter to project to (counted right-to-left).
+Projections are trivial to identify and are represented with \lean{MvQpf.Prj n i}, 
+where $n$ is the arity and $i$ the index of the parameter to project to (counted right-to-left).
 \begin{leancode}
   qpf G₁ α β ρ := α  --> def G₁ := @MvQpf.Prj 3 2
   qpf G₂ α β ρ := β  --> def G₂ := @MvQpf.Prj 3 1
@@ -476,16 +470,20 @@ of the parameter to project to (counted right-to-left).
 For constants we only have to verify that the target expression does not depend on live parameters,
 then we translate them into \lean{@MvQpf.Const n τ}, with $n$ again the arity and \lean{τ} the constant type. 
 \begin{leancode}
-  qpf C₁ α β γ       := Nat     --> def C₁           := @MvQpf.Prj 3 Nat
-  qpf C₂ (n : Nat) α := PFin2 n --> def C₂ (n : Nat) := @MvQpf.Prj 1 (PFin2 n)
-\end{leancode}
-In the second example, \lean{PFin2 n} is not strictly a constant, it depends on \lean{n}, but it still
-counts, since \lean{n} is marked as a dead parameter.
+  qpf C₁ α β γ       := Nat     --> def C₁ := @MvQpf.Const 3 Nat
 
-The last kind of target expression supported is an application, specifically, applications that 
-can be broken down into $\lean{G e₁ ... eₖ}$, for a arbitrary arity $k$, where \lean{G} is a $k$-ary QPF.
-If there are multiple choices, we pick the option that minimizes $k$. This is the kind of expression we
-started this section with, and already discussed how to handle---as \lean{MvQpf.Comp} with recursively determined functors representing arguments \lean{eᵢ}.
+  qpf C₂ (n : Nat) α := PFin2 n 
+      --> def C₂ (n : Nat) := @MvQpf.Const 1 (PFin2 n)
+\end{leancode}
+In the second example, \lean{PFin2 n} is not strictly a constant---it depends on \lean{n}---but it is still
+represented with a constant functor because it only depends on dead parameters.
+
+The last kind of supported expressions are applications \lean{G e₁ ... eₖ} where \lean{G} is a $k$-ary QPF
+that doesn't depend on live parameters, for arbitrary values of $k$.
+This is the kind of expression we discussed at the start of this section.
+We can represent them as \lean{MvQpf.Comp} with recursively determined functors representing arguments \lean{eᵢ}.
+Note that \lean{G} is allowed to be an application itself, so long as it fits the set criteria (it is a QPF and 
+does not depend on live variables), so this breakdown is not necessarily unique.
 
 As an optimization, we don't have to generate \keyword{def} declarations for all intermediate functors, we can just
 inline them.
@@ -522,10 +520,9 @@ of \lean{Base}.
 \section{Auxiliary Constructions}%
 \label{sec:aux_constructions}
 
-That are all the steps for constructing a (co)datatype, but to make that type more useful, there are
-a few extra definitions we want to add. To begin, we want to generate a function for each constructor 
+Beyond just constructing a (co)datatype, there are a few extra definitions we want to add to make the result more usable. To begin, we want to generate a function for each constructor 
 in the specification, with the same name and type. Generating these is relatively straightforward.
-For example, let us recall a specification for lists.
+For example, let us recall the specification for lists.
 \begin{leancode}
   data List α
     | nil  : List α 
@@ -541,9 +538,9 @@ and a fixpoint. The constructors we want to generate are simple wrappers around 
     := fun a as => MvQpf.Fix.mk (List.Shape.cons a as)
 \end{leancode}
 Effectively, we are just composing \lean{Fix.mk} with the corresponding constructor of \lean{List.Shape}.
-The same methods applies to codatatypes, using \lean{CoFix.mk} instead.
+The same method applies to codatatypes, using \lean{CoFix.mk} instead.
 
-At this point we would also want to generate specialized (co)recursion principles and \lean{noConfusion}
+At this point, we would also want to generate specialized (co)recursion principles and \lean{noConfusion}
 theorems, but as mentioned in the introduction, we don't support doing so yet.
 
 
