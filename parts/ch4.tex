@@ -1,6 +1,6 @@
 
 %LEAN namespace Enhancing
-\chapter{Enhancing the QPF formalization}
+\chapter{Enhancing the QPF formalization}%
 \label{ch:enhancing}
 
 
@@ -51,13 +51,13 @@ A curried type function is just an instance of \leanm{CurriedFun}.
 
 
 
-Considering all this complexity, it is easy to see why Avigad et al made all the formalizations and
+Considering all this complexity, it is easy to see why Avigad \etal{} made all the formalizations and
 constructions in terms of uncurried functions. 
 Still, uncurried functions feel very unidiomatic and users will rightfully expect their (co)datatypes
 to function as curried type functions. 
 It would be interesting to see whether it is possible to reformulate the formalization of QPFs in
 terms of curried functions. 
-For the time being, we'll satisfy ourselves with hiding these details throughs
+For the time being, we'll satisfy ourselves with hiding these details through
 \leanm{TypeFun.curried} and \leanm{TypeFun.ofCurried} conversions.
 
 
@@ -114,7 +114,7 @@ Composition of an $n$-ary functor \lean{F} with $m$-ary functors \lean{G₀, G�
 
 Firstly, by the preceding section, we can leave out the \lean{MvFunctor} assumptions, since they are now part of the \lean{MvQpf} assumptions.
 
-Secondly, the last variable, \lean{q'}, states that \lean{G i}, for every \lean{i} of type \lean{Fin2 n}, is a QPF.
+Secondly, the last variable, \lean{q'}, states that \lean{G i}, for every \lean{i} of type \lean{Fin2 n}, is a QPF.\@
 The square brackets indicate that it is a \emph{typeclass variable}, which should be filled in by typeclass \emph{inference}.
 
 As there are only $n$ inhabitants of \lean{Fin2 n}, the universally quantified inference problem \lean{∀ i, MvQpf (G i)} neatly reduces to $n$ non-qualified inference problems \lean{MvQpf (G 0)}, \lean{MvQpf (G 1)}, etc.
@@ -129,7 +129,7 @@ So, we introduce a new typeclass, \lean{VecMvQpf}, which wraps the universally q
 \end{leancode}
 
 Then we can register instances by recursion on the size $n$ of the vector $G$.
-For the base case $n=0$, the vector \lean{G} is empty, and its vacuous to say all elements are QPFs.
+For the base case $n=0$, the vector \lean{G} is empty, and it is vacuous to say all elements are QPFs.
 
 %LEANIGNORE
 \begin{leancode}
@@ -172,7 +172,7 @@ typeclass problem, whereas it will recurse deeper for \lean{VecMvQpf}.
 
 
 
-\section{Universe polymorphic finite type}
+\section{Universe polymorphic finite type}%
 \label{sec:enhance:pfin2}
 Originally, \lean{Fin2} was defined as the following, straightforward, inductive family, as seen in \cref{sec:ind_families}.
 \begin{leancode}
@@ -181,7 +181,7 @@ Originally, \lean{Fin2} was defined as the following, straightforward, inductive
     | fs : Fin2 n → Fin2 (n+1)
 \end{leancode}
 
-However, this definition forces \lean{Fin2} to live in \Type.
+However, this definition forces \lean{Fin2} to live in \Type{}.
 During the project, a need arose for a finite type with exactly $n$ inhabitants, but in arbitrary universes. Thus, the \emph{universe polymorphic} \lean{PFin2} type was added.
 \begin{leancode}
     inductive PFin2 : Nat → Type u

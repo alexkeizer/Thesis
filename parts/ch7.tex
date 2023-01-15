@@ -124,7 +124,7 @@ def List.length : List α → Nat :=
 \end{leancode}
 
 It is important that Lean can statically determine that recursive functions terminate for all 
-arguments. \footnote{Lean \emph{can} admit non-terminating functions when they're marked partial, but partial functions are not allowed to be used in proofs}
+arguments.\footnote{Lean \emph{can} admit non-terminating functions when they're marked partial, but partial functions are not allowed to be used in proofs}
 In the case of structural recursion on a single variable, such as the example above, termination is straightforward,
 but Lean also has a sophisticated \emph{equation compiler} that makes it easy to define functions that recurse
 on multiple variables, with support for termination hints for when it fails to automatically proof

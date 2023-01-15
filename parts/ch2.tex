@@ -1,21 +1,20 @@
-\chapter{Background}
+\chapter{Background}%
 \label{ch:background}
 
 A key concept for the rest of this thesis will be QPF (Quotient of Polynomial Functor), and how we can use them to encode (co)inductive types. The current chapter serves to illuminate this notion, and explain relevant parts of the Lean system along the way.
 
-We will assume as little background knowledge as possible, yet, some (minimal) exposure to category theory and functional programming concepts will be beneficial to understanding. Readers can find references at \cite{awodeyCategoryTheory2010, milewskiCategoryTheoryProgrammers} for category theory and \cite{christiansenFunctionalProgrammingLean} for functional programming.
+We will assume as little background knowledge as possible, yet, some (minimal) exposure to category theory and functional programming concepts will be beneficial to understanding. Readers can find references at~\cite{awodeyCategoryTheory2010, milewskiCategoryTheoryProgrammers} for category theory and~\cite{christiansenFunctionalProgrammingLean} for functional programming.
 
 % \begin{todo}
 %     Add references for FP, maybe The Little Typer?
 % \end{todo}
 
 \begin{remark}
-    We will use remarks like this one below code snippets to explain Lean syntax and concepts that might not be familiar. We don't assume any knowledge of Lean, but the interested reader is invited to consult the online documentation, or ``Functional Programming in Lean'' for a more comprehensive introduction
-    \cite{avigadTheoremProvingLean,christiansenFunctionalProgrammingLean}.
+    We will use remarks like this one below code snippets to explain Lean syntax and concepts that might not be familiar. We don't assume any knowledge of Lean, but the interested reader is invited to consult the online documentation, or ``Functional Programming in Lean'' for a more comprehensive introduction~\cite{avigadTheoremProvingLean,christiansenFunctionalProgrammingLean}.
 \end{remark}
 
 In the interest of consistency, we will use Lean 4 syntax and naming conventions throughout the whole thesis,
-even in our current discussion of the general theory and formalizations as presented by Avigad \etal. (in Lean 3).
+even in our current discussion of the general theory and formalizations as presented by Avigad \etal{}. (in Lean 3).
 The differences between the Lean definitions presented here and their original definition in~\cite{avigadDataTypesQuotients2019a} are purely superficial.
 
 
@@ -32,7 +31,7 @@ This defines a function \lean{List} that takes a type, α, and returns a new typ
 We call such functions \emph{type functions}. Note that we mean function here in a very concrete sense.
 
 \section{Types are Terms \& Type Universes}
-In a dependently typed language, such as Lean, types \emph{are} terms. In particular, things like \lean{Nat} and \lean{String} are types, but they are also \emph{values} of type \Type.
+In a dependently typed language, such as Lean, types \emph{are} terms. In particular, things like \lean{Nat} and \lean{String} are types, but they are also \emph{values} of type \Type{}.
 The signature of \lean{List}, then, is \leanm{Type → Type}.
 
 % Since types are first-class terms in our language,  no different from how the signature of, e.g., \lean{Nat.add} (binary addition of natural numbers) is \leanm{Nat → Nat → Nat}.
@@ -44,7 +43,7 @@ The signature of \lean{List}, then, is \leanm{Type → Type}.
 \end{remark}
 
 We call \Type{} a \emph{type universe}, i.e., a type whose elements are themselves types. However, \Type{} is itself also a value, which needs to live in some universe.
-It cannot be the case that \leanm{Type : Type}; this leads to Girard's paradox, which is the type theory analogue of Russel's Paradox \cite{girardInterpretationFonctionelleElimination1972}.
+It cannot be the case that \leanm{Type : Type}; this leads to Girard's paradox, which is the type theory analogue of Russel's Paradox~\cite{girardInterpretationFonctionelleElimination1972}.
 
 Instead, Lean has an infinite sequence of increasing type universes, so that \leanm{Type : Type 1}, \leanm{Type 1 : Type 2}, and in general, \leanm{Type u : Type (u+1)}. In fact, \leanm{Type} is just a shorthand for \leanm{Type 0}, the smallest type universe.
 
@@ -53,7 +52,7 @@ In particular, when writing \Typen{u}, the universe level \lean{u} is \textbf{no
 
 It is possible, and indeed common to be generic over the universe of some type parameter, we call such 
 definitions \emph{universe polymorphic}.
-.
+
 For example, the actual definition of lists specifies that the parameter \lean{α} should live in an arbitrary universe \lean{Type u}.
 \begin{leancode}
   inductive List (α : Type u)
@@ -89,7 +88,7 @@ Returning to our discussion of \lean{List} and its functoriality, there is an ob
     from the types of \lean{f} and \lean{as}.
 
     Lean will automatically add implicit binders for free variables in a type signature,
-    a feature called \emph{auto bound implicits}. 
+    a feature called \emph{auto-bound implicits}. 
     We will generally rely on this feature, adopting the convention that \lean{α} and \lean{β} refer to types.
 \end{remark}
 
@@ -142,7 +141,7 @@ Finally, the carrier of a final coalgebra corresponds to a coinductive type.
 
 Alternatively, we know that $α$ is the carrier of an initial $F$-algebra (resp.\ final $F$-coalgebra) and
 thus corresponds to an inductive (resp.\ coinductive) type iff it is the least (resp.\ greatest) 
-fixpoint of $F$. We will also call these the \emph{fixpoint}, resp. \emph{cofixpoint}, of $F$.
+fixpoint of $F$. We will also call these the \emph{fixpoint}, resp.\ \emph{cofixpoint}, of $F$.
 
 
 
@@ -164,7 +163,7 @@ To encode this in Lean, we replace ``set'' with ``type'' and obtain the followin
 \end{leancode}
 
 \begin{remark}
-    \leanm{structure} is a simple wrapper around \inductive, for when there is only one constructor.
+    \leanm{structure} is a simple wrapper around \inductive{}, for when there is only one constructor.
     The above type is equivalent to
     \begin{leancode}
         inductive PFunctor 
@@ -189,7 +188,7 @@ Then, the operations on types and functions are straightforward
     Finally, \leanm{fun ⟨a, g⟩ => _} defines a function that takes a single argument \lean{x : P.Obj α}, and immediately deconstructs it into the constituent elements \lean{a : P.A} and \lean{g : P.B a → α}.
 \end{remark}
 
-So an element of \lean{P.Obj α} is a (dependent) pair of a \emph{shape} $a ∈ A$ and a function $g : B_a \rightarrow \alpha$, representing the \emph{contents}. A mapped function \lean{P.map f} then leaves the shape as is, and precomposes $f$ with the content $g$.
+So an element of \lean{P.Obj α} is a (dependent) pair of a \emph{shape} $a ∈ A$ and a function $g : B_a \rightarrow \alpha$, representing the \emph{contents}. A mapped function \lean{P.map f} then leaves the shape as is, and pre-composes $f$ with the content $g$.
 
 \subsection*{W-types}
 We already saw that inductive types are freely generated by the constructors. In a sense, an element of, e.g., \lean{Nat} is a well-founded (i.e., finite) tree with two kinds of nodes: \lean{zero} nodes are leaves, and \lean{succ} nodes have exactly one child.
@@ -256,7 +255,7 @@ Polynomial functors cannot represent such quotients. Thus, we generalize to \emp
 
 Intuitively, a functor $F$ is the quotient of some polynomial functor $P$ when there is a surjective \emph{natural transformation} \lean{abs} from $P$ to $F$. We can think of \lean{abs$_{α}$} as mapping abstract objects in $F(α)$ to their concrete representations in $P(α)$, for every $α$.
 Recall that every functor is equipped with a mapping operation on functions $f : α → β$. To say that \lean{abs} is a natural transformation is to say that it respects this functorial structure. That is to say, the square of \cref{fig:nat_transform_square} should commute for all arrows $f : α → β$.
-\begin{figure}[]
+\begin{figure}[htbp]
     \begin{center}
         % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRAAUAKAHW8bQAWdAJQgAvqXSZc+QijIAmKrUYs2AMR58GgkeMkgM2PASILyy+s1aIOWgEYwceiVOOyzpJdStrbm3kdnUVdDaRM5ZAAWCx9VGxBefiF9NxlTFAA2WJVrNkCnOnFlGCgAc3giUAAzACcIAFskMhAcCCQARji82zp7OAB9JJ0U0LrG5uo2pHNcvztqkINxpsRZ6cQAZm75vsGC51SQFc6p9q2dhM1Fo5PEGNbzgFZLtmrisSA
 \begin{tikzcd}
@@ -300,7 +299,7 @@ a quotient of $P$'s M-type.
 
 
 
-\section{Multivariate Functors}
+\section{Multivariate Functors}%
 \label{sec:mvfunctor}
 
 Earlier, we mentioned that sums and products (written as \lean{α ⊕ β} and \lean{α × β}, respectively, in Lean) are functorial in both arguments.
@@ -385,7 +384,7 @@ Where \lean{f <\$\$> p} is the multivariate analogue of \lean{f <\$> p}, i.e., a
 \lean{(F.map f)} to \lean{p}.
 
 
-\section{Inductive Families}
+\section{Inductive Families}%
 \label{sec:ind_families}
 
 It is important to clarify that we're only considering inductive \emph{types}, 

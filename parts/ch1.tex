@@ -1,4 +1,4 @@
-\chapter{Introduction}
+\chapter{Introduction}%
 \label{ch:intro}
 
 
@@ -56,7 +56,7 @@ They also provide a formalization of their work in Lean 3~\cite{avigadDataTypesQ
 However, to define a (co)datatype using this framework directly, a user has to hand-compile their specification 
 into the provided fundamental operations, making it neither definitional nor ergonomic to use.
 
-The main contribution of this thesis is the description, and prototype implementation, of \data{} and \codata{} macros, enabling users to write a (co)datatypes specification with the familiar, and more convenient, syntax of \inductive{}, which is then automatically compiled into the appropriate constructions on QPFs.
+The main contribution of this thesis is the description, and prototype implementation, of \data{} and \codata{} macros, enabling users to write a (co)datatype specification with the familiar, and more convenient, syntax of \inductive{}, which is then automatically compiled into the appropriate constructions on QPFs.
 The implementation of these macros was done in Lean 4; I ported the existing formalization by Avigad \etal\ to this newer version of Lean.
 
 
@@ -86,7 +86,7 @@ The \data{} and \codata{} macros recognize when the newly defined (co)datatype i
 
 
 This is not limited to just induction or coinduction, (co)datatypes may be defined with a nested mix of both.
-For example, the following defines a potentially infinitely branching (because children of a node are stored in a \lean{CoList}) tree of finite depth (because of the inductive interpretation of \data).
+For example, the following defines a potentially infinitely branching (because children of a node are stored in a \lean{CoList}) tree of finite depth (because of the inductive interpretation of \data{}).
 
 \begin{leancode}
   data RoseTree α
@@ -156,9 +156,11 @@ A major opportunity for future work lies in improving this situation, bringing t
 \subsection*{Related Work}
 The QPF framework by Avigad \etal{}, and the algebraic study of datatypes in general, is based on the observation that datatypes are generally \emph{functorial}~\cite{avigadDataTypesQuotients2019a}.
 
-Specically, the QPF constructions are a variant of the notion of \emph{bounded natural functors} (BNF), 
-which dates back to an effort to add a definitional package for (co)datatypes to Isabelle/HOL---a different theorem prover~\cite{biendarraDefiningCoDatatypes,traytelCategoryTheoryBased}.
-Inspiration has also gone the other direction, with F\"urer \etal{} studying quotients of BNFs~\cite{furerQuotientsBoundedNatural2022}.
+Specifically, the QPF constructions are a variant of the notion of \emph{bounded natural functors} (BNF), 
+which dates back to an effort to add a definitional package for (co)datatypes to Isabelle---a different theorem prover~\cite{biendarraDefiningCoDatatypes,traytelCategoryTheoryBased}.
+Inspiration has also gone the other direction, with Fürer \etal{} studying quotients of BNFs~\cite{furerQuotientsBoundedNatural2022}.
+
+
 
 As mentioned, Lean is based on the Calculus of Inductive Constructions~\cite{coquandMetamathematicalInvestigationsCalculus1989}.
 Coq, another theorem prover based on this same calculus, provides support
@@ -172,7 +174,7 @@ for coinductive types and corecursion directly in the trusted kernel~\cite{gimen
 
 \subsection*{Organization}
 \Cref{ch:background} will explain what QPFs are, and illustrate Lean's syntax in the process.
-\Cref{ch:porting} will dig into the differences between Lean 3 and Lean 4, and detail the process of porting the QPF formalizations made by Avigad \etal
+\Cref{ch:porting} will dig into the differences between Lean 3 and Lean 4, and detail the process of porting the QPF formalizations made by Avigad \etal{}.
 \Cref{ch:enhancing} will describe enhancements made to the formalizations in the process, which go beyond just porting the existing behaviour.
 \Cref{ch:procedure} will establish the procedure to translate the definitional syntax of \data{} and \codata{} into the proper constructions in the theory of QPFs.
 \Cref{ch:implementing} will go into technical detail about the (proof of concept)

@@ -1,8 +1,3 @@
-
-
-
-
-
 \chapter{Implementing the procedure as a proof of concept}%
 \label{ch:implementing}
 
@@ -68,14 +63,14 @@ The following is the definition of the \inductive{} syntax.
                       >> optDeriving
 \end{leancode}
 
-Where \lean{declId}, \lean{optDeclSig}, etc. are all parsers, or parser combinators. Combinators \lean{a >> b} and \lean{a <|> b} mean ``first parse \lean{a}, then \lean{b}'' and ``parse \lean{a} \emph{or} \lean{b}'', respectively.
+Where \lean{declId}, \lean{optDeclSig}, etc.\ are all parsers, or parser combinators. Combinators \lean{a >> b} and \lean{a <|> b} mean ``first parse \lean{a}, then \lean{b}'' and ``parse \lean{a} \emph{or} \lean{b}'', respectively.
 
 \begin{remark}
     Notice how we wrote \lean{«...»} around \inductive{}; these brackets allow us to use 
     reserved keywords as identifiers.
 \end{remark}
 
-This way of defining a parser extension is lower-level than the \keyword{syntax} declaration we saw before, yet, very similar: this parser accepts an ``inductive'' \emph{atom} (or, literal), followed by a declaration id (\lean{declId}), an optional signature (\lean{optDeclSig}), optionally a `` :='' or ``where'' atom, followed by zero or more (\lean{many}) constructor specifications (\lean{ctor}), and finally, an optional list of typeclasses to derive (\lean{optDeriving}).
+This way of defining a parser extension is lower-level than the \keyword{syntax} declaration we saw before, yet, very similar: this parser accepts an \lean{"inductive"} \emph{atom} (or, literal), followed by a declaration identifier (\lean{declId}), an optional signature (\lean{optDeclSig}), optionally a \lean{" :="} or \lean{"where"} atom, followed by zero or more (\lean{many}) constructor specifications (\lean{ctor}), and finally, an optional list of typeclasses to derive (\lean{optDeriving}).
 
 This \lean{Parser} instance is then used in the \lean{declaration} parser.
 \begin{leancode}
@@ -90,7 +85,7 @@ The \lean{builtinCommandParser} attribute registers \lean{declaration} as a buil
     The former, \lean{term}, is the syntax category for terms, e.g., \lean{x + y} or {Type → Nat → Type}, whereas \lean{command} is the category for top-level commands, such as \inductive{}, but also definitions (\keyword{def}), theorems (\keyword{theorem}), etc.
   \end{remark}
 
-We want \data{} to be (mostly) suitable as a drop-in replacement for \inductive{}, so we copy the latter's parser verbatim, replacing the ``inductive'' atom with ``data''; \codata{} also uses the same syntax, expect the command is now ``codata''.
+We want \data{} to be (mostly) suitable as a drop-in replacement for \inductive{}, so we copy the latter's parser verbatim, replacing the \lean{"inductive"} atom with \lean{"data"}; \codata{} also uses the same syntax, expect the command is now \lean{"codata"}.
 \begin{leancode}
   def inductive_like (cmd : String) : Parser
     := leading_parser cmd >> declId  >> optDeclSig  
@@ -193,7 +188,7 @@ Finally, the \lean{InductiveType} is wrapped in a \lean{Declaration}, added to t
 Most of this work, obviously besides the steps that add inductive declarations to the environment, is also relevant for \data{} and \codata{} declarations.
 
 An attempt was made to copy the code of \lean{elabInductiveViews} (and all private or protected functions it called) and factor out all work that is relevant for both \inductive{} and \data{}/\codata{} declarations into a common function.
-However, it turned out that some of the elaboration steps to produce the \lean{InductiveType} object were not desirable for then running the procedure of \cref{ch:procedure} on.
+However, it turned out that some elaboration steps needed to produce the \lean{InductiveType} object were not desirable for then running the procedure of \cref{ch:procedure} on.
 
 For example, type parameters are added to constructor types as implicit arguments during the elaboration steps.
 \begin{leancode}
@@ -280,7 +275,7 @@ The \lean{\$[...]*} part is called a \emph{splice}, and it allows us to use an a
 
 Take note that we have to create the identifier \lean{Baz} with the \lean{mkIdent} function if
 we want it to be accessible. By default, Lean's macros are \emph{hygienic} (see~\cite{ullrichNotationsHygienicMacro2022}),
-meaning that an identifier \lean{Baz} written directly into a syntax quotation is not actually accessible outside of the macro, so that they don't accidentally clash or shadow other identifiers at the call-site. The \lean{mkIdent} function allows us to opt out of hygiene making sure the identifier is just \lean{Baz} as intended.
+meaning that an identifier \lean{Baz} written directly into a syntax quotation is not actually accessible outside the macro, so that they don't accidentally clash or shadow other identifiers at the call-site. The \lean{mkIdent} function allows us to opt out of hygiene making sure the identifier is just \lean{Baz} as intended.
 
 
 

@@ -1,5 +1,5 @@
 
-\chapter{A procedure for synthesizing functors from a specification}
+\chapter{A procedure for synthesizing functors from a specification}%
 \label{ch:procedure}
 
 This chapter will establish a procedure that transforms a specification of a (co)datatype
@@ -8,11 +8,11 @@ It will do so in the abstract, focusing on the details of the procedure, rather 
 details of the Lean meta-programming system (which will be covered in the next chapter).
 
 
-\section{Shape types}
+\section{Shape types}%
 \label{sec:shape_types}
 
 Arguably the simplest, and most fundamental, inductive types are \leanm{Sum α β} and \leanm{Prod α β},
-representing "either α or β" and "a pair of α and β", respectively.
+representing ``either α or β'' and ``a pair of α and β'', respectively.
 They can be defined as
 
 \begin{center}
@@ -33,8 +33,8 @@ inductive Prod α β
 
 They are also examples of what we will call \emph{shape} types.
 \begin{definition}
-    A \emph{shape} type is an inductive type \leanm{Foo α_1, ..., α_n}, 
-    where each constructor takes only arguments of types in $\{α_1, ..., α_n\}$.
+    A \emph{shape} type is an inductive type \lean{Foo α\_1 \ldots\ α\_n}, 
+    where each constructor takes only arguments of types in $\{α_1, \ldots, α_n\}$.
 \end{definition}
 That is, each constructor's arguments must be typed as one of the parameters of the shape type.
 Let's make this a bit clearer by looking at examples that are \textbf{not} shape types. 
@@ -113,8 +113,8 @@ of natural numbers less than $m$, to construct a type with cardinality $m$.
 Let us start by counting for each constructor and each parameter type, how many times the constructor takes an argument of that type.
 \begin{figure}[h]
     \begin{center}
-        \begin{tabular}{l|c|c}
-            & α & β \\ \hline
+        \begin{tabular}{l c c}
+            Constructor     & α & β \\ \midrule
             \lean{Sum.inl}  & 1 & 0 \\
             \lean{Sum.inr}  & 0 & 1 \\
             \lean{Prod.mk}  & 1 & 1 \\    
@@ -164,7 +164,7 @@ it expects something of type
 \end{center}
 Which is shorthand for, 
 \begin{center}
-    (i : PFin 2) → (\leanm{![PFin2 1, PFin 0] i → ![α, β] i})
+  \leanm{(i : PFin 2) → (![PFin2 1, PFin 0] i → ![α, β] i)}
 \end{center}
 That is, a function \leanm{PFin2 1 → α} and a function \leanm{PFin2 0 → β}.
 \begin{remark}
@@ -244,8 +244,8 @@ for the second constructor, then we separate the arguments by their type.
 
 \begin{figure}[h]
 \begin{center}
-    \begin{tabular}{c|c|c}
-                    & \lean{pairA}  & \lean{pairCandB}  \\ \midrule
+    \begin{tabular}{l c c}
+        Type        & \lean{pairA}  & \lean{pairCandB}  \\ \midrule
         \emph{all}  & \lean{[a₀, a₁]} & \lean{[c, b]}   \\ \midrule
         \lean{α}    & \lean{[a₀, a₁]} & \lean{[]}       \\
         \lean{β}    & \lean{[]} & \lean{[b]}       \\
@@ -358,7 +358,7 @@ new parameters are supposed to stand for.
     | node : β → ρ → σ₁ → QpfTree α β ρ σ₁
 \end{leancode}
 
-Then, proceed as in \cref{sec:shape_types} to show that \lean{QpfTree.Shape} is a QPF.
+Then, proceed as in \cref{sec:shape_types} to show that \lean{QpfTree.Shape} is a QPF.\@
 
 \begin{remark}
   When doing this substitution, we can reuse the same parameter for multiple occurrences of the same type.
@@ -432,7 +432,7 @@ of equation. For example, it is impossible to define a QPF that satisfies
 \end{badleancode}
 Because the arrow type constructor \lean{(⋅ → ⋅)} is \emph{not} functorial. 
 At least, it is not functorial in both arguments. If instead, we fix any value \lean{α} for the
-first argument, we obtain \lean{(α → ⋅)}, which \emph{is} a QPF.
+first argument, we obtain \lean{(α → ⋅)}, which \emph{is} a QPF.\@
 More generally, we say that in \lean{α → β}, α is a \emph{dead} variable, since it occurs as a non-functorial argument, while β is a \emph{live} variable.
 
 By default, the composition pipeline assumes arguments are live, but we can explicitly mark some as dead
@@ -447,14 +447,14 @@ The result is a family of QPFs, which means \lean{H} is not a QPF, but \lean{H a
 
 Continuing on, the composition pipeline does support these three kinds of functors:
 \begin{itemize}
-    \item \emph{Projections: } The right-hand-side of the equation is just a parameter, as in \lean{G₁ α β ρ = α}
-    \item \emph{Constants: } The rhs does not mention the live parameters at all, e.g., \lean{G α β = Nat} or 
+    \item \emph{Projections: } The target expression is just a parameter, as in \lean{G₁ α β ρ = α}
+    \item \emph{Constants: } The target expression does not mention the live parameters at all, e.g., \lean{G α β = Nat} or 
                 \leanm{G (n : Nat) β = PFin2 n}.
-    \item \emph{Compositions: } The rhs is an application of a QPF
+    \item \emph{Compositions: } The target expression is an application of a QPF
 \end{itemize}
 
 This notably excludes dependent arrows \lean{(a : α) → \_}, anonymous functions \leanm{fun γ => _},
-and applications of non-QPFs (such as \lean{α → β} when \lean{α} is a live parameter).
+and applications that cannot be appropriately broken down (such as \lean{α → β} when \lean{α} is a live parameter).
 
 
 
@@ -467,7 +467,7 @@ where $n$ is the arity and $i$ the index of the parameter to project to (counted
 \end{leancode}
 
 
-For constants we only have to verify that the target expression does not depend on live parameters,
+For constants, we only have to verify that the target expression does not depend on live parameters,
 then we translate them into \lean{@MvQpf.Const n τ}, with $n$ again the arity and \lean{τ} the constant type. 
 \begin{leancode}
   qpf C₁ α β γ       := Nat     --> def C₁ := @MvQpf.Const 3 Nat
