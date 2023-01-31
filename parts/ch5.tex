@@ -405,7 +405,7 @@ Returning to \lean{QpfTree.Shape}, parameter \lean{σ₁} is supposed to stand f
 
 
 The \emph{composition pipeline} translates such an equation to a definition of \lean{Base} in terms of the appropriate construction on QPF, such that: (a) \lean{Base} is known to be a 3-ary QPF, and (b) the desired equality indeed holds.
-The composition pipeline is not just an internal detail of the procedure, we also expose it through the \qpf{} macro, whose syntax is inspired by \keyword{def}.
+The composition pipeline is not just an internal detail of the procedure, we also expose it through the \qpf{} command, whose syntax is inspired by \keyword{def}.
 \begin{leancode}
   qpf Base α β ρ := QpfTree.Shape α β ρ (QpfList ρ)
 \end{leancode}

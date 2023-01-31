@@ -55,8 +55,8 @@ They also provide a formalization of their work in Lean 3~\cite{avigadDataTypesQ
 However, to define a (co)datatype using this framework directly, a user has to hand-compile their specification 
 into the provided fundamental operations, making it neither definitional nor ergonomic to use.
 
-The main contribution of this thesis is the description, and prototype implementation, of \data{} and \codata{} macros, enabling users to write a (co)datatype specification with the familiar, and more convenient, syntax of \inductive{}, which is then automatically compiled into the appropriate constructions on QPFs.
-The implementation of these macros was done in Lean 4; I ported the existing formalization by Avigad \etal\ to this newer version of Lean.
+The main contribution of this thesis is the description, and prototype implementation, of \data{} and \codata{} commands, enabling users to write a (co)datatype specification with the familiar, and more convenient, syntax of \inductive{}, which is then automatically compiled into the appropriate constructions on QPFs.
+The implementation of these commands was done in Lean 4; I ported the existing formalization by Avigad \etal\ to this newer version of Lean.
 
 
 For example, the following two \codata{} specifications are compiled into coinductive types for infinite lists and potentially infinite lists, equivalent to the ad hoc definitions we saw above.
@@ -80,7 +80,7 @@ Similarly, we can redefine inductive (i.e., finite) lists in terms of \data{}.
 
 
 The QPF approach is \emph{compositional}:
-The \data{} and \codata{} macros recognize when the newly defined (co)datatype is itself a QPF, and automatically register it as such, enabling its use in subsequent (co)datatype definitions.
+The \data{} and \codata{} commands recognize when the newly defined (co)datatype is itself a QPF, and automatically register it as such, enabling its use in subsequent (co)datatype definitions.
 
 
 
@@ -181,7 +181,7 @@ Their approach ensures a computational meaning of the terms.
 \Cref{ch:enhancing} will describe enhancements made to the formalizations in the process, which go beyond just porting the existing behaviour.
 \Cref{ch:procedure} will establish the procedure to translate the definitional syntax of \data{} and \codata{} into the proper constructions in the theory of QPFs.
 \Cref{ch:implementing} will go into technical detail about the (proof of concept)
-implementation of these macros, and the Lean 4 meta-programming system.
+implementation of these commands, and the Lean 4 meta-programming system.
 \Cref{ch:limitations} will discuss the limitations of the current implementation, and opportunities for improvement.
 Finally, \cref{ch:conclusion} concludes the thesis.
 

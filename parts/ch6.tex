@@ -4,7 +4,7 @@
 
 In the preceding chapter, we explored how to translate definitional specifications of (co)datatypes to the fundamental constructions that can encode (co)datatypes as QPFs.
 In the current chapter, we will discuss the technical details of implementing this procedure in Lean 4, as \data{}
-and \codata{} macros.
+and \codata{} commands.
 
 To that end, we're going to dig deeper into parts of the meta-programming system. Nonetheless, we
 will focus on only the parts that are relevant to our implementation, for a more comprehensive introduction
@@ -49,7 +49,7 @@ to \lean{Typing Γ (1 + 2 * 3) Nat}.
 Clearly, though, \data{} and \codata{} would be hard to define in terms of such substitutions.
 We could, in theory, replace the right-hand side of a \keyword{macro\_rules} match arm 
 with arbitrary code that produces a \lean{Syntax} object, and in this way, define a \emph{procedural macro}.
-This is, however, not idiomatic, procedural macros are usually defined as an \emph{elaborator}.
+This is, however, not idiomatic, complex commands are usually defined as an \emph{elaborator}.
 
 
 \subsection*{Data and Codata Syntax}%
@@ -57,7 +57,7 @@ This is, however, not idiomatic, procedural macros are usually defined as an \em
 
 Before we get to what an elaborator is, we'll take a few steps back and consider how to define the parser extensions for \data{} and \codata{}.
 
-The flexibility and extensibility of Lean are not just for users. The Lean 4 compiler is mostly written in Lean 4 itself, and it turns out that a lot of the language syntax is implemented as macros. Amongst them, \inductive{},
+The flexibility and extensibility of Lean are not just for users. The Lean 4 compiler is mostly written in Lean 4 itself, and it turns out that a lot of the language syntax is implemented with the meta-programming system. Amongst them, \inductive{},
 whose syntax is defined with the following parser extension.
 \begin{leancode}
   def «inductive» := leading_parser "inductive " >> declId >> optDeclSig 
@@ -128,7 +128,7 @@ The code above still fails, complaining that we did not define an \emph{elaborat
 \subsection*{Unsupported syntax}%
 \label{subsec:impl:unsupported_syntax}
 
-Note that parser extensions are not strictly about which syntax is \emph{supported}, rather, they declare which syntax this macro is \emph{responsible} for.
+Note that parser extensions are not strictly about which syntax is \emph{supported}, rather, they declare which syntax this command is \emph{responsible} for.
 Suppose, for example, that a user tried to derive a typeclass for their datatype.
 \begin{badleancode}
   data Foo α
@@ -140,7 +140,7 @@ Although this syntax is accepted by the \data{} parser, we don't actually suppor
 
 Removing the \lean{>> optDeriving} part from the parser definition would bring the accepted syntax closer to what is actually supported, making \lean{Foo} as written above lead to a generic parse error.
 
-Nevertheless, the user is clearly trying to invoke our \data{} macro, and \inductive{} does support such a \keyword{deriving} statement, so it is to be expected that users will try to use it. The generic parse errors are quite obscure and bad at communicating to the user that \keyword{deriving} statements are not supported; a user might reasonably think the parse error is because of some (non-existent) typo.
+Nevertheless, the user is clearly trying to invoke our \data{} command, and \inductive{} does support such a \keyword{deriving} statement, so it is to be expected that users will try to use it. The generic parse errors are quite obscure and bad at communicating to the user that \keyword{deriving} statements are not supported; a user might reasonably think the parse error is because of some (non-existent) typo.
 
 So instead, we have the parser accept exactly the same syntax as \inductive{}, and in the \emph{elaborator} we then throw a custom, informative error when a user tries to use unsupported constructs.
 In this way, \data{} is truly a drop-in replacement for \inductive{}, syntax-wise, and any errors will guide the user and explain unsupported syntax.
