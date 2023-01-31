@@ -34,7 +34,7 @@ to construct a list with an infinite chain of \text{cons} applications
 \begin{center}
     \lean{cons 0 (cons 1 (cons 2 (cons 3 (cons 4 (cons 5 ...)))))}
 \end{center}
-The recursion must end in \lean{nil} at some point, \lean{List} represent only finite lists.
+The recursion must end in \lean{nil} at some point; \lean{List} represents only finite lists.
 That being said, (countably) infinite lists (also called streams) have a straightforward encoding in Lean, as functions from natural numbers to the parameter type.
 \begin{leancode}
     def Stream α := Nat → α
@@ -84,7 +84,7 @@ The \data{} and \codata{} macros recognize when the newly defined (co)datatype i
 
 
 
-This is not limited to just induction or coinduction, (co)datatypes may be defined with a nested mix of both.
+This is not limited to just induction or coinduction; (co)datatypes may be defined with a nested mix of both.
 For example, the following defines a potentially infinitely branching (because children of a node are stored in a \lean{CoList}) tree of finite depth (because of the inductive interpretation of \data{}).
 
 \begin{leancode}
@@ -161,21 +161,23 @@ Inspiration has also gone the other direction, with Fürer \etal{} studying quot
 
 
 Lean is developed by de Moura \etal{} at Microsoft Research, based on the Calculus of Inductive Constructions~\cite{demouraLeanTheoremProver2015,coquandMetamathematicalInvestigationsCalculus1989}.
-Coq, another theorem prover based on this same calculus, provides support
-for coinductive types and corecursion directly in the trusted kernel~\cite{gimenezApplicationCoinductiveTypes1996,gimenezTutorialRecursiveTypes1998}. Contrast this with the BNF or QPF approaches, which are implemented entirely as a
+Agda and Coq, two more theorem provers, provide support
+for coinductive types and corecursion directly in their trusted kernel~\cite{gimenezApplicationCoinductiveTypes1996,gimenezTutorialRecursiveTypes1998}. Contrast this with the BNF or QPF approaches, which are implemented entirely as a
 library.
 
-The study of coinduction 
+Basold~and~Geuvers~\cite{basoldMixedInductiveCoinductiveReasoning2018, basoldTypeTheoryBased2016}
+studied a dependent type theory with coinductive types separate from any specific theorem prover.
+Their approach ensures a computational meaning of the terms.
 
 
-\begin{todo}
-    Expand on related work section
-\end{todo}
+% \begin{todo}
+%     Expand on related work section
+% \end{todo}
 
 
 \subsection*{Organization}
 \Cref{ch:background} will explain what QPFs are, and illustrate Lean's syntax in the process.
-\Cref{ch:porting} will dig into the differences between Lean 3 and Lean 4, and detail the process of porting the QPF formalizations made by Avigad \etal{}.
+\Cref{ch:porting} will dig into the differences between Lean 3 and Lean 4, and detail the process of porting the QPF formalizations made by Avigad \etal{}
 \Cref{ch:enhancing} will describe enhancements made to the formalizations in the process, which go beyond just porting the existing behaviour.
 \Cref{ch:procedure} will establish the procedure to translate the definitional syntax of \data{} and \codata{} into the proper constructions in the theory of QPFs.
 \Cref{ch:implementing} will go into technical detail about the (proof of concept)

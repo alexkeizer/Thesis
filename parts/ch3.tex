@@ -1,5 +1,5 @@
 
-\chapter{Porting the QPF formalization from Lean3 to Lean4}%
+\chapter{Porting the QPF formalization from Lean 3 to Lean 4}%
 \label{ch:porting}
 
 Lean is primarily developed by Leonardo de Moura \etal{} at Microsoft Research~\cite{demouraLeanTheoremProver2015, avigadTheoremProvingLean}. As an in-progress research project, the team explicitly provides no stability guarantees. Indeed, Lean 4 is not backward compatible with Lean 3, meaning that the QPF formalizations by Avigad \etal{}
@@ -8,7 +8,7 @@ Lean is primarily developed by Leonardo de Moura \etal{} at Microsoft Research~\
 
 
 Lean 3 has a comprehensive, community-maintained mathematics library, mathlib (\cite{themathlibcommunityLeanMathematicalLibrary2020}), 
-which also functions as its unofficial, de-facto standard library, and to which Avigad \etal contributed
+which also functions as its unofficial, de-facto standard library, and to which Avigad \etal{} contributed
 their formalization of QPFs.
 Mathlib4 is the port of this library to Lean 4 (\cite{mathlib4}),
 but large parts were still missing at the time I started my thesis project (and still are, at time of writing).
@@ -25,7 +25,7 @@ the ported QPF formalization back to mathlib4, making it more widely available.
 
 
 \section{Mathport and Changes from Lean 3}
-Lean 4 is not just a new version of the language, most of the code base has been rewritten.
+Lean 4 is not just a new version of the language; most of the code base has been rewritten.
 There were some changes in the syntax and naming convention, but most importantly, 
 the meta-programming in Lean 4 has been completely reworked.
 

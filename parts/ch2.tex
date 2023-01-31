@@ -10,11 +10,11 @@ We will assume as little background knowledge as possible, yet, some (minimal) e
 % \end{todo}
 
 \begin{remark}
-    We will use remarks like this one below code snippets to explain Lean syntax and concepts that might not be familiar. We don't assume any knowledge of Lean, but the interested reader is invited to consult the online documentation, or ``Functional Programming in Lean'' for a more comprehensive introduction~\cite{avigadTheoremProvingLean,christiansenFunctionalProgrammingLean}.
+    We will use remarks like this one below code snippets to explain Lean syntax and concepts that might not be familiar. We don't assume any knowledge of Lean, but the interested reader is invited to consult the online documentation, or \emph{Functional Programming in Lean} for a more comprehensive introduction~\cite{avigadTheoremProvingLean,christiansenFunctionalProgrammingLean}.
 \end{remark}
 
 In the interest of consistency, we will use Lean 4 syntax and naming conventions throughout the whole thesis,
-even in our current discussion of the general theory and formalizations as presented by Avigad \etal{}. (in Lean 3).
+even in our current discussion of the general theory and formalizations as presented by Avigad \etal{} (in Lean 3).
 The differences between the Lean definitions presented here and their original definition in~\cite{avigadDataTypesQuotients2019a} are purely superficial.
 
 
@@ -43,7 +43,7 @@ The signature of \lean{List}, then, is \leanm{Type → Type}.
 \end{remark}
 
 We call \Type{} a \emph{type universe}, i.e., a type whose elements are themselves types. However, \Type{} is itself also a value, which needs to live in some universe.
-It cannot be the case that \leanm{Type : Type}; this leads to Girard's paradox, which is the type theory analogue of Russel's Paradox~\cite{girardInterpretationFonctionelleElimination1972}.
+It cannot be the case that \leanm{Type : Type}; this leads to Girard's paradox, which is the type theory analogue of Russel's paradox~\cite{girardInterpretationFonctionelleElimination1972}.
 
 Instead, Lean has an infinite sequence of increasing type universes, so that \leanm{Type : Type 1}, \leanm{Type 1 : Type 2}, and in general, \leanm{Type u : Type (u+1)}. In fact, \leanm{Type} is just a shorthand for \leanm{Type 0}, the smallest type universe.
 
@@ -64,7 +64,7 @@ The signature of this version of \lean{List} is \leanm{Type u → Type u}, for a
 
 \section{Functoriality of type functions}
 
-Returning to our discussion of \lean{List} and its functoriality, there is an obvious mapping function to lift a function \lean{f : α → β}, for arbitrary types \lean{α} and \lean{β}, into a function \lean{List α → List β}, by applying \lean{f} to each element of the argument list. Its signature is written as:
+Returning to our discussion of \lean{List} and its functoriality, there is an obvious mapping function to lift a function \lean{f : α → β}, for arbitrary types \lean{α} and \lean{β}, into a function \lean{List α → List β}, by applying \lean{f} to each element of the argument list. Its signature is written as
 \begin{center}
     \leanm{map : (f : α → β) → List α → List β}
 \end{center}
@@ -97,8 +97,9 @@ A type function \leanm{F : Type u → Type v} together with a mapping operation 
     \item \emph{Identity maps}, that is, \lean{F (id α) = id (F α)}, with \lean{id β} the identity function on arbitrary types \lean{β}, and
     \item \emph{Compositions}, that is, \lean{(map f) ∘ (map g) = map (f ∘ g)}, where \lean{∘} denotes function composition
 \end{itemize}
-\lean{List α} is an example of a functor, but so are, e.g., products (\lean{α × β}) and sums 
-(\lean{α ⊕ β}).
+
+% Other common examples of functors are products (\lean{F α = α × β}) and sums (F α = \lean{α ⊕ β}), for
+% some fixed type \lean{β}.
 
 A function $f : F(α) → α$, for some fixed \emph{carrier} type \lean{α}, is called an \emph{\lean{F}-algebra}.
 Inductive types correspond to the carrier of an \emph{initial} such algebra. To clarify, an \lean{F}-algebra \lean{f} is initial, if for every \lean{F}-algebra \lean{g : F(β) → β} there is exactly one arrow $\lean{rec} : α → β$ that makes the left square of \cref{fig:initial_alg_square} commute.
@@ -128,7 +129,7 @@ Then, let $g : F_{nat}(α) → α$ be an arbitrary $F$-algebra, and define a fun
 The inductive properties of \lean{Nat} are exactly what makes this algebra initial.
 
 
-Conversely, initial algebras are unique up-to isomorphism, so any other initial $F_{{nat}}$-algebra $h: F_{{nat}}(β) → β$
+Conversely, initial algebras are unique up to isomorphism, so any other initial $F_{{nat}}$-algebra $h: F_{{nat}}(β) → β$
 is equivalent to $f$ and its carrier, $β$, is equivalent to \lean{Nat}.
 
 
@@ -172,7 +173,7 @@ To encode this in Lean, we replace ``set'' with ``type'' and obtain the followin
     Together with a projection function for each field.
 \end{remark}
 
-Then, the operations on types and functions are straightforward
+Then, the operations on types and functions are straightforward:
 \begin{leancode}
     /-- Applying `P` to an object of `Type` -/
     def PFunctor.Obj (P : PFunctor) (α : Type u)
@@ -302,9 +303,9 @@ a quotient of $P$'s M-type.
 \section{Multivariate Functors}%
 \label{sec:mvfunctor}
 
-Earlier, we mentioned that sums and products (written as \lean{α ⊕ β} and \lean{α × β}, respectively, in Lean) are functorial in both arguments.
-Yet, the definitions presented so far only allow for functors to have a single argument.
-We have to generalize from the univariate case to \emph{multivariate} functors.
+Other common examples of functors are sums (\lean{α ⊕ β}) and products (\lean{α × β}).
+These functors take two arguments (both \lean{α} and \lean{β}).
+So, we generalize the definitions presented so far from the univariate case to \emph{multivariate} functors.
 
 It is difficult to reason about $n$-ary curried functions, where $n$ is arbitrary, so instead an \emph{uncurried} representation of multivariate, universe polymorphic, type functions is used.
 

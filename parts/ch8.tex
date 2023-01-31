@@ -2,19 +2,21 @@
 \chapter{Conclusion}%
 \label{ch:conclusion}
 
-Although the implementation is far from complete, and a lot more work is required to improve the ergonomics of (co)recursive functions, this thesis hopes to contribute to making coinductive types available in Lean, with strong support for mixed induction, coinduction, and quotients. 
+In this thesis, I presented the procedure behind, and implementation of, a (co)datatype package for Lean 4.
+The package enables users to ergonomically define coinductive types to Lean 4 in a compositional way,
+with support for mixed induction, coinduction, and quotients.
 
-In particular, I designed a procedure that compiles definitional specifications of (co)dataypes
-that arbitrarily nest induction, coinduction, and quotients into constructions on quotients of polynomial functors that define the desired type.
+The package is based on the category theoretical notion of a quotient of polynomial functor.
+An existing formalization of QPFs and their constructions was ported from Lean 3 to Lean 4.
+The updated formalizations will eventually be made available as part of the mathlib4 project, the port of Leans community-maintained, comprehensive mathematics library.
 
-This procedure was built upon a pre-existing formalization of QPFs, but first,
-this formalization had to be ported from Lean 3 to Lean 4. I am also in the process of making
-these ported formalizations available as part of the mathlib4 project, the port of Leans community-maintained, comprehensive mathematics library.
+The prototype implementation makes extensive use of Leans meta-programming system.
+Specifically, the \data{} and \codata{} commands accept the same syntax as Leans standard \inductive{} type specifications.
+We also discuss the details of elaborating both commands in Lean, and weighed the trade-offs involved with 
+synthesizing new declarations.
 
-Finally, a prototype implementation was developed as a Lean library, making extensive use of its meta-programming system.
-This library enables users to write (co)datatype specifications with the full expressive power of QPFs using the
-same syntax as Leans standard \inductive{} type specifications.
 
-\begin{todo}
-    Expand conclusion
-\end{todo}
+
+That being said, defining a type is only part of the equation. More work is needed to simplify the definition of (co)recursive functions. We have briefly outlined some strategies that future work might pursue.
+
+

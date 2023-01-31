@@ -24,9 +24,9 @@ However, the formalizations are done in terms of vectors of types and uncurried 
 %LEAN end Hidden
 
 There is an obvious translation from \leanm{TypeFun} to a curried type function and, vice versa, from a curried function taking $n$ types from the same universe and returning a type, to a \leanm{TypeFun n}.
-These conversions were implemented as \leanm{TypeFun.toCurried} and \leanm{TypeFun.ofCurried}, respectively, and it was proven that these functions are inverses. 
+These conversions were implemented as \leanm{TypeFun.curried} and \leanm{TypeFun.ofCurried}, respectively, and it was proven that these functions are inverses. 
 
-To wit, they function as expected:
+To wit, they behave as expected:
 \begin{leancode}
   variable (F : TypeFun 2) (F' : Type 1 → Type 1 → Type 2)
   example : F.curried α β = F ![α, β]                 := by rfl
@@ -41,8 +41,8 @@ The type \leanm{CurriedFun α β n} is a recursively defined alias for \leanm{α
     | n+1 => α → CurriedFun α β n
 \end{leancode}
 
-Intuitively one might expect a \leanm{CurriedFun} taking no arguments (so, $n = 0$) to be equal to just \leanm{β}, but that does not typecheck---\leanm{Type v} and \leanm{Type (max u v)} are not, in general, the same type.
-One should be able to lift \lean{β} into the right universe, but functions without arguments are not particularly interesting for our purposes anyway, so a simpler solution was chosen. 
+Intuitively one might expect a \leanm{CurriedFun} taking no arguments (so, $n = 0$) to be equal to just \leanm{β}, but that does not typecheck---\leanm{Type v} and \leanm{Type (max u v)} are not, in general, the same type.\footnote{Note that Lean's universes are \emph{non-cumulative}, meaning that elements of \leanm{Type v} are not automatically part of higher universe \leanm{Type (v + 1)}.}
+In any case, functions without arguments are not particularly interesting for our purposes, so a simpler solution was chosen. 
 Functions that take no arguments are seen as functions from the universe polymorphic unit type \lean{PUnit}.
 
 A curried type function is just an instance of \leanm{CurriedFun}.
@@ -71,7 +71,7 @@ of life improvement for the \leanm{MvQpf} typeclass. The latter was originally d
     class MvQpf {n : Nat} (F : TypeFun n) [MvFunctor F] where
         -- ...
 \end{leancode}
-This makes sense, \lean{F} can only be a QPF if it is a functor in the first place.
+This makes sense, since \lean{F} can only be a QPF if it is a functor in the first place.
 However, when declared like this, the type of \leanm{MvQpf} is 
 
 %LEANIGNORE
@@ -98,7 +98,7 @@ typeclass. Hence, \lean{MvQpf F} has no more implicit arguments (the value for \
 which fixes these issues.
 
 
-\section{Type class inference for vectors}
+\section{Typeclass inference for vectors}
 
 Composition of an $n$-ary functor \lean{F} with $m$-ary functors \lean{G₀, G₁, ..., Gₙ₋₁} originally took the following variables.
 
