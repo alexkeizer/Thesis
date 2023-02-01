@@ -377,7 +377,42 @@ Where \lean{TypeVec.comp} is the pointwise composition of two vectors of functio
     Implicit variables are not limited to types, we will use \lean{n} and \lean{m} for natural numbers and \lean{v, v₀, v₁, ...} for type vectors.
 \end{remark}
 
-The generalization of M- and W-types to the multivariate case is left as an exercise for the reader.
+\subsection*{Multivariate M- and W-types}
+
+The multivariate W-type is a fixed point with respect to only the last variable. 
+Suppose $P$ is an $n+1$-ary polynomial functor given by shapes $A$ and contents $B$, then its W-type is itself an $n$-ary polynomial functor.
+
+The shape of $W$ is given by data-less, well-founded trees, whose nodes are labelled with $a ∈ A$ and whose children are indexed by $last(B_a)$, the last type in the vector of types $B_a$.
+That is, the shapes of $W$ are elements of the univariate W-type given by $A$ and $last(B_a)$.
+
+The content for a given tree, then, is given by valid paths to the nodes in this tree.
+\begin{leancode}
+  /-- A path from the root of a tree to one of its nodes -/
+  inductive WPath : P.last.W → Fin2 n → Type u
+  | root (a : P.A) (f : P.last.B a → P.last.W) (i : Fin2 n) (c : P.drop.B a i) :
+      WPath ⟨a, f⟩ i
+  | child (a : P.A) (f : P.last.B a → P.last.W) (i : Fin2 n) (j : P.last.B a) 
+          (c : W_path (f j) i) :
+      WPath ⟨a, f⟩ i
+\end{leancode}
+Note that \lean{P.last} denotes the (univariate) polynomial functor given by $A$ and $last(B_a)$, the last type in vector $B_a$, and 
+\lean{P.drop} is the (multivariate) polynomial functor given by $A$ and $drop(B_a)$, the result of removing the last type of the vector $B_a$.
+
+To conclude, an element of the multivariate W-type is a pair of a tree and a function from (paths to) nodes in that tree to the data contained at that node.
+\begin{leancode}
+  def Wp (P : MvPFunctor (n+1)) : MvPFunctor n := 
+    { A := P.last.W, B := P.WPath }
+\end{leancode}
+
+The M-type is defined analogously, except, the shapes are non-well-founded trees.
+That is, given by a univariate M-type.
+\begin{leancode}
+  def Mp (P : MvPFunctor (n+1)) : MvPFunctor n := 
+    { A := P.last.M, B := P.WPath }
+\end{leancode}
+
+
+
 
 \subsection*{Multivariate QPFs}
 The definition of multivariate QPFs is not very different from the univariate case. We merely replace (polynomial) functors with multivariate (polynomial) functors.
