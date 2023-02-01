@@ -51,7 +51,7 @@ However, Lean lacks a comprehensive, definitional solution to defining infinite 
 
 To address this, Avigad \etal{}\ describe a framework for defining \emph{coinductive} types (also called codatatypes) in Lean,
 basing their constructions on the category theoretical notion of \emph{quotients of polynomial functors} (QPF).
-They also provide a formalization of their work in Lean 3~\cite{avigadDataTypesQuotients2019a}.
+They also provide a formalization of their work in Lean 3~\cite{avigadDataTypesQuotients2019}.
 However, to define a (co)datatype using this framework directly, a user has to hand-compile their specification 
 into the provided fundamental operations, making it a not very user-friendly way to define a type.
 
@@ -153,7 +153,7 @@ A major opportunity for future work lies in improving this situation, bringing t
 
 
 \subsection*{Related Work}
-The QPF framework by Avigad \etal{}, and the algebraic study of datatypes in general, is based on the observation that datatypes are generally \emph{functorial}~\cite{avigadDataTypesQuotients2019a}.
+The QPF framework by Avigad \etal{}, and the algebraic study of datatypes in general, is based on the observation that datatypes are generally \emph{functorial}~\cite{avigadDataTypesQuotients2019}.
 
 Specifically, the QPF constructions are a variant of the notion of \emph{bounded natural functors} (BNF), 
 which dates back to an effort to add a definitional package for (co)datatypes to Isabelle---a different theorem prover~\cite{biendarraDefiningCoDatatypes,traytelCategoryTheoryBased}.
