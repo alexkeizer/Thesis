@@ -30,7 +30,7 @@ Take, for example, the inductive type of lists, specified as
 This defines a function \lean{List} that takes a type, α, and returns a new type, whose elements represent lists of α.
 We call such functions \emph{type functions}.
 
-\section{Types are terms \& type universes}
+\section{Type universes}
 Lean is a dependently typed language, so types \emph{are} terms. 
 In particular, things like \lean{Nat} and \lean{String} are types, but they are also \emph{values} of type \Type{}.
 The type of \lean{List}, then, is \leanm{Type → Type}.
