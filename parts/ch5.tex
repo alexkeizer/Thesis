@@ -146,7 +146,7 @@ Using the counts of \cref{fig:ctor_bookkeepping}, we define the child family of 
     we must mean \lean{Sum.HeadT.inl}.
 \end{remark}
 From here on, the construction is the same for both types;
-We'll show it just for \lean{Sum}.
+we'll show it just for \lean{Sum}.
 
 \begin{leancode}
     def Sum.P  : MvPFunctor 2 := MvPFunctor.mk Sum.HeadT  Sum.ChildT
@@ -163,18 +163,17 @@ it expects something of type
 \begin{center}
     \leanm{(Sum.ChildT .inl) ⟹ ![α, β]}
 \end{center}
-Which is shorthand for, 
+Recalling that \leanm{⟹} is shorthand for a vector of functions, we get
 \begin{center}
   \leanm{(i : PFin 2) → (![PFin2 1, PFin 0] i → ![α, β] i)}
 \end{center}
-That is, a function \leanm{PFin2 1 → α} and a function \leanm{PFin2 0 → β}.
+That is, \lean{inl} expects a function \lean{f : PFin2 1 → α} together with a function \lean{g : PFin2 0 → β}.
 \begin{remark}
     Note that vectors are indexed right-to-left, so \lean{![α, β] 0} is \lean{β}
     and \lean{![α, β] 1} is \lean{α}
 \end{remark}
 
-Recall that we defined vectors of size $n$ as functions \lean{PFin2 n → α}, so 
-
+Recall that we defined vectors of size $n$ as functions \lean{PFin2 n → α}, so, equivalently, \lean{f} is a vector of \lean{α}s of length 1 and \lean{g} is a trivial empty vector. So, really, the \lean{inl} constructor only needs a single argument of type \lean{α}, as desired. We can define a more convenient version of \lean{inl} as follows:
 
 \begin{leancode}
     def QpfSum.inl {α β} (a : α) : QpfSum α β :=
@@ -182,7 +181,11 @@ Recall that we defined vectors of size $n$ as functions \lean{PFin2 n → α}, s
         | 1 => ![a]
         | 0 => ![]
       )
-    
+\end{leancode}
+
+Similarly, the \lean{inr} constructor needs only a single argument of type \lean{β}.
+
+\begin{leancode}
     def QpfSum.inr {α β} (b : β) : QpfSum α β :=
       MvPFunctor.mk .inr (fun (i : PFin 2) => match i with
         | 1 => ![]
@@ -190,20 +193,24 @@ Recall that we defined vectors of size $n$ as functions \lean{PFin2 n → α}, s
       )
 \end{leancode}
 
+By defining these constructors, we can make \lean{QpfSum} behave a bit more like the analogous \inductive{}
+type.
+Nonetheless, when a user tries to destruct an element of \lean{QpfSum α β} the inner details of the encoding will be exposed, 
+making \lean{QpfSum} slightly harder to use than the \inductive{} version.
 
-We could define these constructors, but the inner details will still be exposed
-when a user tries to destruct an element of \lean{QpfSum α β}.
-
-\subsection{MvQpf.ofPolynomial}
+\subsection*{Shape types as inductive types}
 Because of the simplicity of shape types, i.e., their lack of any (co)induction or composition, 
-they can just be defined as \inductive{} types.
-The only reason we bother with deriving a polynomial functor is to show that
-the shape type is a QPFs (i.e., to provide an instance of \lean{MvQpf}).
+they can just be defined as regular \inductive{} types.
+However, to use shape types in subsequent constructions, e.g., taking a (co)fixpoint, 
+needed to 
+define more complicated (co)datatypes, we do need to show
+that it is a QPF.\@
 
-It stands to reason that if $P$ is a polynomial functor, and $F$ is isomorphic to $P$, then $F$ is at
-the very least a QPF\footnote{Informally, we would call $F$ polynomial. But recall that we formalized polynomial functors with a specific structure that might not be preserved by the isomorphism, so formally $F$ might not be considered polynomial.}, this is formalized by \lean{MvQpf.ofPolynomial}.
+It stands to reason that if \lean{P} is a polynomial functor, and \lean{F} is isomorphic to \lean{P}, then \lean{F} is at
+the very least a QPF.\footnote{Informally, we would call \lean{F} polynomial. But, recall that we formalized polynomial functors with a specific structure that might not be preserved by the isomorphism, so formally \lean{F} might not be considered polynomial.}
+This observation is formalized as \lean{MvQpf.ofPolynomial}.
 
-\pagebreak
+% \pagebreak
 %LEANIGNORE
 \begin{leancode}
     def ofPolynomial {F : TypeFun n} 
@@ -243,7 +250,7 @@ Following the procedure introduced at the start of this section, we obtain a cor
 \end{leancode}
 
 Let us use \lean{a₀} and \lean{a₁} for the arguments to the first constructor, and \lean{c} and \lean{b}
-for the second constructor, then we separate the arguments by their type.
+for the second constructor. Then, we separate the arguments by their type.
 
 \begin{figure}[h]
 \begin{center}
@@ -285,6 +292,7 @@ that for \lean{pairA} its arguments are stored at \lean{child 2 0} and \lean{chi
   \end{leancode}
 
 The proof that these two functions are inverses is a straightforward mix of case distinction and reflexivity.
+Finally, \lean{ofPolynomial} can be used to show that \lean{SumOfPairs} is a QPF.
 
 
 
@@ -293,10 +301,9 @@ The proof that these two functions are inverses is a straightforward mix of case
 
 \section{Recursive and corecursive types}%
 \label{sec:rec_types}
-If a type is recursive but otherwise does not mention other types, it is not strictly a shape type,
-but it can easily be transformed into one.
-Namely, by adding an extra type parameter \lean{ρ} and substituting \lean{ρ} for all (co)recursive occurrences of the type
-to be defined.
+If a type is recursive but otherwise does not mention other types, it is not strictly a shape type.
+Nevertheless, by adding an extra type parameter \lean{ρ} and substituting \lean{ρ} for all (co)recursive occurrences of the type
+to be defined, we obtain a shape type.
 
 For example, the shape corresponding to \lean{List α} (as defined in \cref{sec:shape_types}) is
 \begin{leancode}
@@ -304,12 +311,18 @@ For example, the shape corresponding to \lean{List α} (as defined in \cref{sec:
     | nil  : Shape α ρ
     | cons : α → ρ → Shape α ρ
 \end{leancode}
-This is a valid shape type, so we follow the procedure above to derive an instance of \lean{MvQpf}.
-To get rid of the extra variable \lean{ρ}, we take the fixpoint.
+
+To get rid of the extra variable \lean{ρ}, we then take the fixpoint. Notice that it is required to show 
+that \lean{List.Shape} is a QPF before we can do this.
+\lean{List.Shape} is a shape type,
+so we can derive an instance of \lean{MvQpf} following the procedure of the last section, whence the
+following defines the type of finite lists:
 \begin{leancode}
   def QpfList.Uncurried : TypeFun 2 
-    := MvQpf.Fix (TypeFun.ofCurried MyList.Shape)
+    := MvQpf.Fix (TypeFun.ofCurried List.Shape)
 \end{leancode}
+
+
 
 Conversely, suppose we wish to define \lean{CoList}, the \emph{coinductive} type of potentially infinite lists.
 We introduced this type in the introduction with a specification that is similar to \lean{List}, but mandates a corecursive interpretation.
@@ -431,15 +444,15 @@ Continuing with the motivating example, we are going to define \lean{Base} as \l
 \end{leancode}
 
 Which we will recursively determine.
-Before we continue, it should be clarified that the composition pipeline does not support any kind
-of equation. For example, it is impossible to define a QPF that satisfies
+Before we continue, it should be clarified that the composition pipeline is not able to satisfy all 
+equations. For example, it is impossible to define a QPF that satisfies
 \begin{badleancode}
   qpf H α β := α → β 
 \end{badleancode}
-Because the arrow type constructor \lean{(⋅ → ⋅)} is \emph{not} functorial. 
+This is because the arrow type constructor \lean{(⋅ → ⋅)} is \emph{not} functorial. 
 At least, it is not functorial in both arguments. If instead, we fix any value \lean{α} for the
 first argument, we obtain \lean{(α → ⋅)}, which \emph{is} a QPF.\@
-More generally, we say that in \lean{α → β}, α is a \emph{dead} variable, since it occurs as a non-functorial argument, while β is a \emph{live} variable.
+More generally, we say that in \lean{α → β}, the variable \lean{α} is \emph{dead}, since it occurs as a non-functorial argument, while β is a \emph{live} variable.
 
 By default, the composition pipeline assumes arguments are live, but we can explicitly mark some as dead
 by giving a type ascription. 
@@ -448,15 +461,26 @@ by giving a type ascription.
 \end{leancode}
 The result is a family of QPFs, which means \lean{H} is not a QPF, but \lean{H a}, for arbitrary values \lean{a : α} is.
 
+\begin{remark}
+  Recall that the live parameters to a functor must all live in the same universe \leanm{Type u}, where
+  \lean{u} can be either some fixed level, or universe polymorphic.
+  To make the implementation simpler, we don't allow any type ascription for live variables in the 
+  prototype implementation, instead relying on inference to determine what universe they should live in.
+  This frees up the type ascription as a simple (to implement) way of distinguishing live and dead
+  variables.
+
+  In a more polished future implementation, we should probably move to a more explicit syntax to mark
+  dead variables, to minimize the risk of variables that could be live unintentionally being marked dead.
+\end{remark}
 
 
 
 Continuing on, the composition pipeline does support these three kinds of functors:
 \begin{itemize}
-    \item \emph{Projections: } The target expression is just a parameter, as in \lean{G₁ α β ρ = α}
+    \item \emph{Projections: } The target expression is just a parameter, as in \lean{G₁ α β ρ = α}.
     \item \emph{Constants: } The target expression does not mention the live parameters at all, e.g., \lean{G α β = Nat} or 
                 \leanm{G (n : Nat) β = PFin2 n}.
-    \item \emph{Compositions: } The target expression is an application of a QPF
+    \item \emph{Compositions: } The target expression is an application of a QPF.\@
 \end{itemize}
 
 This notably excludes dependent arrows \lean{(a : α) → \_}, anonymous functions \leanm{fun γ => _},
@@ -526,7 +550,7 @@ of \lean{Base}.
 \section{Auxiliary Constructions}%
 \label{sec:aux_constructions}
 
-After constructing the (co)datatype, there are a few extra definitions we want to add to make the result more usable. To begin, we want to generate a function for each constructor 
+After constructing the (co)datatype, there are a few extra definitions we want to add to make the result more usable. To begin with, we want to generate a function for each constructor 
 in the specification, with the same name and type. Generating these is relatively straightforward.
 For example, let us recall the specification for lists.
 \begin{leancode}
@@ -577,6 +601,6 @@ To sum up, we can give a high-level overview of the procedure in the following s
 \end{enumerate}
 
 Steps~\ref{enum:proc:make_nonrec}~and~\ref{enum:proc:fixpoint} can be omitted if the specification is not (co)recursive, and steps~\ref{enum:proc:mkShape}~and~\ref{enum:proc:mkBase} may be omitted
-if the input is already a shape type, but it is also fine to forego such analysis and perform all steps anyway.
+if the input is already a shape type, but it is also fine to forgo such analysis and perform all steps anyway.
 
 

@@ -1,5 +1,5 @@
 
-\chapter{Future considerations / current limitations}%
+\chapter{Limitation and future work}%
 \label{ch:limitations}
 
 
@@ -49,7 +49,7 @@ our code to be compatible.
 
 \section{Characteristic Theorems}
 
-The formalizations of Avigad \etal{} provide (co)recursion principles, as \lean{Fix.drec} and \lean{Cofix.corec}.
+The formalizations of Avigad \etal{} provide (co)recursion principles, such as \lean{Fix.drec} and \lean{Cofix.corec}.
 However, because of how these are defined, their signature is quite obscure and not directly suitable for end-users.
 \begin{leancode}
   #check @MvQpf.Fix.drec _ List.Internal _
@@ -71,7 +71,7 @@ In contrast, the \inductive{} version of \lean{List} defines its recursion princ
     → motive t
 \end{leancode}
 
-Which is a lot easier to read by comparison. To make our datatypes behave as similarly to Leans native
+The latter recursion principle is a lot easier to read by comparison. To make our datatypes behave as similarly to Leans native
 \inductive{} types, we should generate the same recursion principles as Lean would.
 In this particular case, the second recursion principle is fairly easily defined in terms of \lean{MvQpf.Fix.drec}.
 \begin{leancode}
@@ -124,10 +124,9 @@ def List.length : List α → Nat :=
 
 It is important that Lean can statically determine that recursive functions terminate for all 
 arguments.\footnote{Lean \emph{can} admit non-terminating functions when they're marked partial, but partial functions are not allowed to be used in proofs}
-In the case of this example, termination is straightforward,
+For this example, termination is straightforward,
 but Lean also has a sophisticated \emph{equation compiler} that makes it easy to define functions that recurse
-on multiple variables, with support for termination hints, to help when the system fails to automatically proof
-termination.
+on multiple variables, with support for termination hints, to help when the system fails to automatically prove termination.
 
 It would be interesting to see if the existing equation compiler mechanisms can be re-used
 to also provide a high-level way of defining recursive functions for QPFs, so that users can write

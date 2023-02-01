@@ -28,11 +28,13 @@ Take, for example, the inductive type of lists, specified as
 \end{leancode}
 
 This defines a function \lean{List} that takes a type, α, and returns a new type, whose elements represent lists of α.
-We call such functions \emph{type functions}. Note that we mean function here in a very concrete sense.
+We call such functions \emph{type functions}.
 
 \section{Types are Terms \& Type Universes}
-In a dependently typed language, such as Lean, types \emph{are} terms. In particular, things like \lean{Nat} and \lean{String} are types, but they are also \emph{values} of type \Type{}.
-The signature of \lean{List}, then, is \leanm{Type → Type}.
+Lean is a dependently typed language, so types \emph{are} terms. 
+In particular, things like \lean{Nat} and \lean{String} are types, but they are also \emph{values} of type \Type{}.
+The type of \lean{List}, then, is \leanm{Type → Type}.
+In particular, there is no distinction between type functions and functions that operate on, e.g., natural numbers.
 
 % Since types are first-class terms in our language,  no different from how the signature of, e.g., \lean{Nat.add} (binary addition of natural numbers) is \leanm{Nat → Nat → Nat}.
 
@@ -60,7 +62,7 @@ For example, the actual definition of lists specifies that the parameter \lean{�
     | cons : α → List α → List α
 \end{leancode}
 
-The signature of this version of \lean{List} is \leanm{Type u → Type u}, for arbitrary universe levels \lean{u}.
+The type of this version of \lean{List} is \leanm{Type u → Type u}, for arbitrary universe levels \lean{u}.
 
 \section{Functoriality of type functions}
 
@@ -102,7 +104,7 @@ A type function \leanm{F : Type u → Type v} together with a mapping operation 
 % some fixed type \lean{β}.
 
 A function $f : F(α) → α$, for some fixed \emph{carrier} type \lean{α}, is called an \emph{\lean{F}-algebra}.
-Inductive types correspond to the carrier of an \emph{initial} such algebra. To clarify, an \lean{F}-algebra \lean{f} is initial, if for every \lean{F}-algebra \lean{g : F(β) → β} there is exactly one arrow $\lean{rec} : α → β$ that makes the left square of \cref{fig:initial_alg_square} commute.
+Inductive types correspond to the carrier of an \emph{initial} such algebra. To clarify, an \lean{F}-algebra \lean{f} is initial, if for every \lean{F}-algebra $g : F(β) → β$ there is exactly one arrow $\lean{rec} : α → β$ that makes the left square of \cref{fig:initial_alg_square} commute.
 \begin{figure}[ht]
     \begin{center}
 % https://tikzcd.yichuanshen.de/#N4Igdg9gJgpgziAXAbVABwnAlgFyxMJZABgBpiBdUkANwEMAbAVxiRADEAKAHW8bQAWdAJQgAvqXSZc+QijIAmKrUYs2vfkPGSQGbHgJEF5ZfWatEHHtwBGMHCO1T9so6SXUzay7zsPxyjBQAObwRKAAZgBOEAC2SGQgOBBIAIzUDHR2DAAK0gZyIFFYwQI4IJ6qFiARTjUx8YiJyUjGKuZsXLw4MAAeOAPAUTAAxmKiEpENrdQtiADMlR2WwRUgmdl5LoaWDDAR5ZP1cWmzKQtL3iDdfQM4Q6NiAWJAA
@@ -170,7 +172,6 @@ To encode this in Lean, we replace ``set'' with ``type'' and obtain the followin
         inductive PFunctor 
         | mk : (A : Type u) → (B : A → Type u) → PFunctor
     \end{leancode}
-    Together with a projection function for each field.
 \end{remark}
 
 Then, the operations on types and functions are straightforward:
@@ -294,6 +295,8 @@ relation.
 Similarly, the greatest fixed point (thus, the final coalgebra) of a QPF $F$ can be constructed as
 a quotient of $P$'s M-type.
 
+The exact details of this construction are not relevant for the rest of this thesis, we merely need to know that there is some way to construct these fixed points. Nonetheless, the full construction can be found in the work of Avigad \etal{}.~\cite{avigadDataTypesQuotients2019a}.
+
 
 
 
@@ -312,7 +315,7 @@ It is difficult to reason about $n$-ary curried functions, where $n$ is arbitrar
 \begin{leancode}
     def TypeFun (n : Nat) := (TypeVec.{u} n) → Type v
 \end{leancode}
-Where \lean{TypeVec} (short for \emph{type vector}) conceptually is a list of exactly $n$ elements of \Typen{u}.
+Conceptually, \lean{TypeVec} (short for \emph{type vector}) is a list of exactly $n$ elements of \Typen{u}.
 We define type vectors as functions from a canonical finite type \lean{Fin2 n}, which has exactly $n$ inhabitants,
 to types.
 \begin{leancode}
@@ -365,11 +368,10 @@ Where \lean{TypeVec.comp} is the pointwise composition of two vectors of functio
     Implicit variables are not limited to types, we will use \lean{n} and \lean{m} for natural numbers and \lean{v, v₀, v₁, ...} for type vectors.
 \end{remark}
 
-The generalization of M and W-types to the multivariate case is left as an exercise for the reader.
+The generalization of M- and W-types to the multivariate case is left as an exercise for the reader.
 
 \subsection*{Multivariate QPFs}
-The definition of multivariate QPFs is not very different from the univariate case, we merely replace
-(polynomial) functors with multivariate (polynomial) functors.
+The definition of multivariate QPFs is not very different from the univariate case. We merely replace (polynomial) functors with multivariate (polynomial) functors.
 
 \begin{leancode}
   class MvQpf {n : ℕ} (F : TypeFun.{u,_} n) [MvFunctor F]  where
@@ -383,6 +385,9 @@ The definition of multivariate QPFs is not very different from the univariate ca
 
 Where \lean{f <\$\$> p} is the multivariate analogue of \lean{f <\$> p}, i.e., applying 
 \lean{(F.map f)} to \lean{p}.
+
+Again, the initial algebra or final coalgebra of a multivariate QPF
+can be constructed as a quotient of the underlying polynomial functor's W- or M-type.
 
 
 \section{Inductive Families}%
