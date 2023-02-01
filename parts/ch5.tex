@@ -567,7 +567,7 @@ and a fixpoint. The constructors we want to generate are simple wrappers around 
   def List.cons : α → List α → List α 
     := fun a as => MvQpf.Fix.mk (List.Shape.cons a as)
 \end{leancode}
-Effectively, we are just composing \lean{Fix.mk} with the corresponding constructor of \lean{List.Shape}.
+Effectively, we are just applying \lean{Fix.mk} to the result of the corresponding constructor of \lean{List.Shape}.
 The same method applies to codatatypes, using \lean{CoFix.mk} instead.
 
 At this point, we would also want to generate specialized (co)recursion principles and \lean{noConfusion}
