@@ -30,7 +30,7 @@ Take, for example, the inductive type of lists, specified as
 This defines a function \lean{List} that takes a type, α, and returns a new type, whose elements represent lists of α.
 We call such functions \emph{type functions}.
 
-\section{Types are Terms \& Type Universes}
+\section{Types are terms \& type universes}
 Lean is a dependently typed language, so types \emph{are} terms. 
 In particular, things like \lean{Nat} and \lean{String} are types, but they are also \emph{values} of type \Type{}.
 The type of \lean{List}, then, is \leanm{Type → Type}.
@@ -288,7 +288,7 @@ Where \lean{f <\$> x} is Lean syntax for applying \lean{map$_\texttt{G}$ f} to \
 
 
 
-\subsection*{Fixpoint and Cofixpoint}
+\subsection*{Fixpoint and cofixpoint}
 Crucially, every QPF still has an initial algebra; if $F$ is the quotient of some polynomial functor
 $P$, then the least fixed point of $F$ can be constructed as a quotient of $P$'s W-type over a suitable
 relation.
@@ -303,7 +303,7 @@ The exact details of this construction are not relevant for the rest of this the
 
 
 
-\section{Multivariate Functors}%
+\section{Multivariate functors}%
 \label{sec:mvfunctor}
 
 Other common examples of functors are sums (\lean{α ⊕ β}) and products (\lean{α × β}).
@@ -344,7 +344,7 @@ Thus, if \lean{f₁ : α₁ → β₁} and \lean{f₂ : α₂ → β₂}, then \
 
 Finally, the functoriality constraints have an obvious generalization to the multivariate case.
 
-\subsection*{Multivariate Polynomial Functors}
+\subsection*{Multivariate polynomial functors}
 An $n$-ary, polynomial functor is still defined with a shape $A$ as before, but the content now maps $a ∈ A$ not to a single type, but to a vector of $n$ types.
 
 \begin{leancode}
@@ -390,7 +390,7 @@ Again, the initial algebra or final coalgebra of a multivariate QPF
 can be constructed as a quotient of the underlying polynomial functor's W- or M-type.
 
 
-\section{Inductive Families}%
+\section{Inductive families}%
 \label{sec:ind_families}
 
 It is important to clarify that we're only considering inductive \emph{types}, 

@@ -12,7 +12,7 @@ This chapter serves to elaborate on those changes which are too big to be consid
 
 
 
-\section{Functions \& Currying}
+\section{Curried functions}
 Like most functional languages, it is idiomatic to write Lean functions in their curried form, 
 so \leanm{f : Type → Type → Type}, rather than \leanm{f : (Type × Type) → Type}.
 However, the formalizations are done in terms of vectors of types and uncurried type functions.
@@ -63,7 +63,7 @@ For the time being, we'll satisfy ourselves with hiding these details through
 
 
 
-\section{Make MvQpf extend MvFunctor}
+\section{Typeclass extensions}
 The following change might feel underwhelming, but it presents a considerable quality 
 of life improvement for the \leanm{MvQpf} typeclass. The latter was originally defined as
 %LEANIGNORE

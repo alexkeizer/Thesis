@@ -31,7 +31,7 @@ This is primarily because mathport (intentionally) does not deal with meta-progr
 of \emph{tactics} (proof automation meta-programs) provided by mathlib were still missing from mathlib4.
 
 
-\section{Implicit arguments and other inference}
+\section{Inference of implicit arguments}
 Lean relies heavily on inference to reduce verbosity, falling back on explicitly provided
 values or annotations when types or arguments are wrongly inferred.
 Lean 4 sometimes inferred something sufficiently different from Lean 3 that the result no longer
@@ -82,7 +82,7 @@ This problem was hard to diagnose but relatively easy to remedy.
 Once the divergence was found, we can readily see from the Lean 3 proof state what the motive should be.
 
 
-\section{Missing Tactics} 
+\section{Missing tactics} 
 Conversely, the issue of missing tactics was easy to diagnose, but harder to fix.
 The long-term best solution would have been to implement missing tactics.
 However, there were quite a few, and implementing them would probably have taken a long time.

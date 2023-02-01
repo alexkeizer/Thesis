@@ -52,7 +52,7 @@ with arbitrary code that produces a \lean{Syntax} object, and in this way, defin
 This is, however, not idiomatic; complex commands are usually defined as an \emph{elaborator}.
 
 
-\subsection*{Data and Codata Syntax}%
+\subsection*{Data and codata Syntax}%
 \label{subsec:impl:syntax}
 
 Before we get to what an elaborator is, we'll take a few steps back and consider how to define the parser extensions for \data{} and \codata{}.
@@ -148,12 +148,12 @@ In this way, \data{} is truly a drop-in replacement for \inductive{}, syntax-wis
 
 
 
-\section{Defining the Semantics of a Macro}
-With the parser extension in place, the next step is to give our commands their semantics, by defining a corresponding elaborator.
+\section{Defining the semantics of a command}
+With the parser extension in place, the next step is to give our commands their semantics, by defining a corresponding \emph{elaborator}.
 We already mentioned that the two main syntax categories are terms and commands.
 Both have a slightly different kind of elaborator.
 
-Terms are translated to expressions in the core logic of Lean (as encoded by the \lean{Expr} type). A \emph{term elaborator} is thus a function \lean{Syntax → TermElabM Expr}, where \lean{TermElabM} is the term elaboration monad. This monad gives (read-only) access to the \emph{environment} (i.e., declarations and imports that the term can refer to) and \emph{metavariable context} (roughly speaking, a metavariable represents a hole in the program that should be synthesized/inferred at some point during compilation).
+Elaborating a term means to translate it to an expression of the core logic of Lean (as encoded by the \lean{Expr} type). A \emph{term elaborator} is thus a function \lean{Syntax → TermElabM Expr}, where \lean{TermElabM} is the term elaboration monad. This monad gives (read-only) access to the \emph{environment} (i.e., declarations and imports that the term can refer to) and \emph{metavariable context} (roughly speaking, a metavariable represents a hole in the program that should be synthesized/inferred at some point during compilation).
 
 
 Commands, on the other hand, are not translated but used for their side effect. Hence, the type of a \emph{command elaborator} is \lean{Syntax → CommandElabM Unit}, where the \lean{CommandElabM} monad allows for four kinds of side effects: 
@@ -164,23 +164,23 @@ Commands, on the other hand, are not translated but used for their side effect. 
     \item Throwing errors
 \end{enumerate}
 
-Although \lean{TermElabM} neither extends nor is extended by \lean{CommandElabM}, it is common to elaborate terms in a command elaborator, e.g., by using \lean{liftTermElabM} or \lean{runTermElabM}.
+Although \lean{TermElabM} neither extends nor is extended by \lean{CommandElabM}, it is common to elaborate terms as part of a command elaborator, e.g., by using \lean{liftTermElabM} or \lean{runTermElabM}.
 
 
-\subsection*{Registering}
-To register an elaborator, we need to use another attribute.
+\subsection*{Elaborator registration}
+Besides defining a function of the appropriate type, an elaborator also needs to be decorated with the right attribute.
 
 \begin{leancode}
   @[commandElab declaration] def elabData : Syntax → CommandElabM Unit
 \end{leancode}
 
-Where \lean{declration} is the name of the parser we defined in the preceding section, telling Lean
+Where \lean{declaration} is the name of the parser we defined in the preceding section, telling Lean
 to use this elaborator for \data{} and \codata{} commands.
 Before going further into the implementation of \lean{elabData}, we'll go over some high-level choices 
 that were made, and their trade-offs.
 
 
-\section{Elaborating Inductive Declarations}
+\section{Elaborating inductive declarations}
 For the elaborator, too, we draw inspiration from how \inductive{} is implemented.
 Elaboration starts in the generic declaration elaborator, which checks what the kind of declaration it is given, and defers to \lean{elabInductive} (in case of an inductive declaration). The latter, in turn, calls \lean{inductiveSyntaxToView} to transform the \lean{Syntax} object into a \lean{InductiveView} and defers to \lean{elabInductiveViews}.
 
@@ -290,7 +290,7 @@ The \lean{mkIdent} function allows us to opt out of hygiene so that the identifi
 
 
 
-\section{Implementing the Elaborator}%
+\section{Implementing the elaborator}%
 \label{sec:implementing}
 
 Now that we have a general idea of the meta-programming system of Lean, and a high-level implementation strategy, let us 
