@@ -295,7 +295,7 @@ relation.
 Similarly, the greatest fixed point (thus, the final coalgebra) of a QPF $F$ can be constructed as
 a quotient of $P$'s M-type.
 
-The exact details of this construction are not relevant for the rest of this thesis, we merely need to know that there is some way to construct these fixed points. Nonetheless, the full construction can be found in the work of Avigad \etal{}.~\cite{avigadDataTypesQuotients2019a}.
+The exact details of this construction are not relevant for the rest of this thesis, we merely need to know that there is some way to construct these fixed points. Nonetheless, the full construction can be found in the work of Avigad \etal{}.~\cite{avigadDataTypesQuotients2019}.
 
 
 
@@ -307,8 +307,17 @@ The exact details of this construction are not relevant for the rest of this the
 \label{sec:mvfunctor}
 
 Other common examples of functors are sums (\lean{α ⊕ β}) and products (\lean{α × β}).
-These functors take two arguments (both \lean{α} and \lean{β}).
-So, we generalize the definitions presented so far from the univariate case to \emph{multivariate} functors.
+These functors take two arguments (both \lean{α} and \lean{β}), yet, we've only discussed univariate functors (i.e., functors with a single argument).
+
+One could see, e.g., the product functor as one of two univariate functors, \lean{(α × $\cdot$)} or \lean{(⋅ × β)}, effectively choosing to fix one of the arguments. However, this limits compositionality. To illustrate, consider a type of binary trees.
+\begin{leancode}
+  data BinaryTree α
+    | node : (BinaryTree α × BinaryTree α) → TreeOfProd α
+    | leaf : α → TreeOfProd α
+\end{leancode}
+    Because \lean{BinaryTree α} is used as \emph{both} arguments to the product, this specification is only well-formed if the product functor is functorial in both arguments (simultaneously).
+    Thus, we generalize the definitions presented so for to \emph{multivariate} functors. 
+
 
 It is difficult to reason about $n$-ary curried functions, where $n$ is arbitrary, so instead an \emph{uncurried} representation of multivariate, universe polymorphic, type functions is used.
 
