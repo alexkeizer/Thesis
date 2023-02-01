@@ -149,7 +149,9 @@ In this way, \data{} is truly a drop-in replacement for \inductive{}, syntax-wis
 
 
 \section{Defining the semantics of a command}
-With the parser extension in place, the next step is to give our commands their semantics, by defining a corresponding \emph{elaborator}.
+With the parser extension in place, the next step is to give our commands their semantics, by defining a corresponding \emph{command elaborator}.
+That is, we have to define the Lean code that is run when a \data{} or \codata{} command is invoked.
+
 We already mentioned that the two main syntax categories are terms and commands.
 Both have a slightly different kind of elaborator.
 
@@ -168,14 +170,13 @@ Although \lean{TermElabM} neither extends nor is extended by \lean{CommandElabM}
 
 
 \subsection*{Elaborator registration}
-Besides defining a function of the appropriate type, an elaborator also needs to be decorated with the right attribute.
+Besides defining a function of the appropriate type, an elaborator also needs to be decorated with a \lean{commandElab} attribute.
 
 \begin{leancode}
   @[commandElab declaration] def elabData : Syntax → CommandElabM Unit
 \end{leancode}
 
-Where \lean{declaration} is the name of the parser we defined in the preceding section, telling Lean
-to use this elaborator for \data{} and \codata{} commands.
+The argument to the attribute, \lean{declaration}, refers to the parser we defined in the preceding section, which is how Lean knows to use this elaborator for \data{} and \codata{} commands.
 Before going further into the implementation of \lean{elabData}, we'll go over some high-level choices 
 that were made, and their trade-offs.
 
@@ -299,8 +300,7 @@ By design, the steps of the procedure we described in \cref{sec:procedure:overvi
 We will now describe roughly the same overview, but with a focus
 on which functions implement which step.
 
-First, \lean{makeNonRecursive} takes a \lean{DataView} and returns a new, non-recursive \lean{DataView} (step~\ref{enum:proc:make_nonrec}).  
-
+First, \lean{makeNonRecursive} takes a \lean{DataView} and returns a new, non-recursive \lean{DataView} (step~\ref{enum:proc:make_nonrec}).
 Then, \lean{mkShape} takes this non-recursive view, defines \lean{Shape} as an inductive type (step~\ref{enum:proc:mkShape}) and calls \lean{mkQpf} to derive the corresponding polynomial functor and establish its isomorphism with \lean{Shape} (step~\ref{enum:proc:mkQpf}).
 
 Continuing, \lean{elabQpfComposition} is the entry point into the composition pipeline (step~\ref{enum:proc:mkBase}), and is used to obtain a syntax tree that represents the \lean{Base} functor.
@@ -310,7 +310,6 @@ Depending on which command was called, \lean{mkType} will take either the fixpoi
 add the result to the environment (step~\ref{enum:proc:fixpoint}). It will do so both first uncurried form, as \lean{F.Uncurried}, and
 then define \lean{F} as \lean{@TypeFun.curried n F.Uncurried}, where \lean{F} is whatever identifier the
 user supplied and $n$ is the arity.
-
 Finally, \lean{mkConstructors} will derive the expected constructor functions (step~\ref{enum:proc:aux})
 
 

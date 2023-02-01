@@ -53,7 +53,7 @@ To address this, Avigad \etal{}\ describe a framework for defining \emph{coinduc
 basing their constructions on the category theoretical notion of \emph{quotients of polynomial functors} (QPF).
 They also provide a formalization of their work in Lean 3~\cite{avigadDataTypesQuotients2019a}.
 However, to define a (co)datatype using this framework directly, a user has to hand-compile their specification 
-into the provided fundamental operations, making it neither definitional nor ergonomic to use.
+into the provided fundamental operations, making it a not very user-friendly way to define a type.
 
 The main contribution of this thesis is the description, and prototype implementation, of \data{} and \codata{} commands, enabling users to write a (co)datatype specification with the familiar, and more convenient, syntax of \inductive{}, which is then automatically compiled into the appropriate constructions on QPFs.
 The implementation of these commands was done in Lean 4; I ported the existing formalization by Avigad \etal\ to this newer version of Lean.

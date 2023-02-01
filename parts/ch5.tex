@@ -195,7 +195,7 @@ Similarly, the \lean{inr} constructor needs only a single argument of type \lean
 
 By defining these constructors, we can make \lean{QpfSum} behave a bit more like the analogous \inductive{}
 type.
-Nonetheless, when a user tries to destruct an element of \lean{QpfSum α β} the inner details of the encoding will be exposed, 
+Nonetheless, it is not possible to do pattern matching with these constructor wrappers, 
 making \lean{QpfSum} slightly harder to use than the \inductive{} version.
 
 \subsection*{Shape types as inductive types}
