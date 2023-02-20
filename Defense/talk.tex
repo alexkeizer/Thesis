@@ -4,14 +4,14 @@
 % --------------------------------------------------------------------
 % Load packages
 
-\input{../parts/preamble.tex}
+% \input{../parts/preamble.tex}
 
 \usepackage{unicode-math}
 \usepackage{fontspec}
-\usepackage[outputdir=./out]{minted}
+% \usepackage[outputdir=./out]{minted}
 % instruct minted to use our local theorem.py
-\newmintinline[lean]{lean4.py:Lean4Lexer -x}{bgcolor=white}
-\newminted[leancode]{lean4.py:Lean4Lexer -x}{fontsize=\small}
+% \newmintinline[lean]{lean4.py:Lean4Lexer -x}{bgcolor=white}
+% \newminted[leancode]{lean4.py:Lean4Lexer -x}{fontsize=\small}
 
 \usepackage{booktabs}
 \usepackage{graphicx}
@@ -52,6 +52,7 @@
 
 % switch to a monospace font supporting more Unicode characters
 \setmonofont{FreeMono}
+\font\nullfont=cmr10
 
 % --------------------------------------------------------------------
 
@@ -72,14 +73,14 @@
 %\setbeameroption{show notes on second screen}
 
 % --------------------------------------------------------------------
-\nonstopmode % Include issues with the slides
-\beamertemplatenavigationsymbolsempty
+\nonstopmode{} % Include issues with the slides
+\beamertemplatenavigationsymbolsempty{}
 \setbeamertemplate{navigation symbols}{}
 
 % ====================================================================
 % Header settings
 \def\lecturename{Lecture}
-\title[]{A (co)datatype package for Lean 4}
+\title[]{Implementing a definitional (co)datatype package in Lean 4}
 \subtitle{Based on Quotients of Polynomial Functors}
 \date{}
 \author{\textbf{Alex Keizer} \\ Supervised by: \and Jasmin Blanchette \and Benno v.d. Berg}
@@ -90,9 +91,9 @@
 % Main part
 
 % --------------------------------------------------------------------
-\batchmode % Do not include issues with the package definitions
+\batchmode{} % Do not include issues with the package definitions
 \begin{document}
-\nonstopmode % Include issues with the slides
+\nonstopmode{} % Include issues with the slides
 
 
 
@@ -112,15 +113,25 @@
   \begin{frame}{Lean 4}
       \begin{itemize}
           \item Interactive Theorem Prover / Proof Assistant
-          \item Dependently Typed
-          \item Lean 4 is the latest release
+          \item Programming Language
+                \begin{itemize}
+                    \item Functional
+                    \item Dependently Typed
+                \end{itemize}          
       \end{itemize}
 
       \bigskip
 
+    \begin{center}
+      \includegraphics[scale=0.25]{lean.png}
+    \end{center}
+
     %   A previous formalization of QPFs exists, but in Lean 3
   \end{frame}
  }
+
+\end{document}
+\stop{}
 
 % --------------------------------------------------------------------
 
