@@ -1,0 +1,418 @@
+\batchmode % Do not display issues with package loading
+\documentclass[t,12pt]{beamer}
+
+% --------------------------------------------------------------------
+% Load packages
+
+\input{../parts/preamble.tex}
+
+\usepackage{unicode-math}
+\usepackage{fontspec}
+\usepackage[outputdir=./out]{minted}
+% instruct minted to use our local theorem.py
+\newmintinline[lean]{lean4.py:Lean4Lexer -x}{bgcolor=white}
+\newminted[leancode]{lean4.py:Lean4Lexer -x}{fontsize=\small}
+
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{calc,trees,positioning,arrows,chains,shapes.geometric,%
+    decorations.pathreplacing,decorations.pathmorphing,decorations.markings,shapes,%
+    matrix,shapes.symbols,automata,cd,backgrounds, arrows.meta}
+\usetikzlibrary{positioning}
+\usepackage{color}
+\usepackage{mathtools}
+
+% \usepackage{listings}
+% \lstset{tabsize=2,showspaces=false,showtabs=false,basicstyle=\ttfamily\mdseries\itshape\normalsize}
+
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage[scr=boondoxo]{mathalpha}
+\usepackage[normalem]{ulem}
+
+\usepackage{qtree}
+
+% --------------------------------------------------------------------
+% Beamer version theme settings
+\usetheme{Frankfurt}
+% \usecolortheme{beaver}
+
+% Remove navigation symbols
+\setbeamertemplate{navigation symbols}{}
+
+% Better default font
+\usepackage{lmodern}
+\usepackage[textfont={scriptsize,it}]{caption}
+\setbeamerfont{caption}{size=\scriptsize}
+\renewcommand*{\familydefault}{\sfdefault}
+
+\usetikzlibrary{overlay-beamer-styles}
+
+% switch to a monospace font supporting more Unicode characters
+\setmonofont{FreeMono}
+
+% --------------------------------------------------------------------
+
+\def\liketitle#1{%
+{\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}%
+\begin{flushleft}%
+\vspace{-\baselineskip}% Cometic correction for space introduced by flushleft
+#1\par
+\end{flushleft}%
+\vspace{-\baselineskip}% Cosmetic correction for space introduced by flushleft
+}%
+\vspace{0.75\baselineskip}%
+}
+
+% --------------------------------------------------------------------
+\setbeameroption{hide notes}
+%\setbeameroption{show notes}
+%\setbeameroption{show notes on second screen}
+
+% --------------------------------------------------------------------
+\nonstopmode % Include issues with the slides
+\beamertemplatenavigationsymbolsempty
+\setbeamertemplate{navigation symbols}{}
+
+% ====================================================================
+% Header settings
+\def\lecturename{Lecture}
+\title[]{A (co)datatype package for Lean 4}
+\subtitle{Based on Quotients of Polynomial Functors}
+\date{}
+\author{\textbf{Alex Keizer} \\ Supervised by: \and Jasmin Blanchette \and Benno v.d. Berg}
+\subject{}
+
+
+% ====================================================================
+% Main part
+
+% --------------------------------------------------------------------
+\batchmode % Do not include issues with the package definitions
+\begin{document}
+\nonstopmode % Include issues with the slides
+
+
+
+% ====================================================================
+\section*{Introduction}
+
+ % --------------------------------------------------------------------
+ {
+  \begin{frame}[plain]
+      \maketitle
+  \end{frame}
+  \addtocounter{framenumber}{-1}% don't count the title slide.
+ }
+
+ % --------------------------------------------------------------------
+ {
+  \begin{frame}{Lean 4}
+      \begin{itemize}
+          \item Interactive Theorem Prover / Proof Assistant
+          \item Dependently Typed
+          \item Lean 4 is the latest release
+      \end{itemize}
+
+      \bigskip
+
+    %   A previous formalization of QPFs exists, but in Lean 3
+  \end{frame}
+ }
+
+% --------------------------------------------------------------------
+
+% \begin{frame}[fragile]{Datatypes are inductive}
+%     \bigskip
+% \begin{leancode}
+% inductive Nat
+%   | zero : Nat
+%   | succ : Nat → Nat
+% \end{leancode}
+
+% \bigskip
+
+% That is, 
+% \begin{itemize}
+%     \item \lean{zero} is a \lean{Nat},
+%     \item given any \lean{n : Nat}, \lean{succ n} is a \lean{Nat},
+%     \item Nothing else is a \lean{Nat}
+% \end{itemize}
+
+% \medskip
+
+% % Furthermore, we have \lean{Zero ≠ Succ n}
+ 
+% \end{frame}
+
+% --------------------------------------------------------------------
+
+
+\begin{frame}[fragile]{Datatypes are inductive}
+    \bigskip
+\begin{leancode}
+inductive List (α : Type)
+  | nil  : List α
+  | cons : α → List α → List α
+\end{leancode}
+
+\bigskip
+
+\only<1>{
+That is, 
+\begin{itemize}
+    \item \lean{nil} is a \lean{List α},
+    \item If \lean{hd : α} and \lean{tl : List α}, then \\ \lean{cons hd tl} is a \lean{List α},
+    \item Nothing else is a \lean{List α}
+\end{itemize}
+}
+
+\only<2> {
+Furthermore,
+\begin{itemize}
+    \item \lean{nil ≠ cons hd tl}
+    \item Constructors are injective
+\end{itemize}
+}
+\end{frame}
+
+
+
+% --------------------------------------------------------------------
+
+
+\begin{frame}[fragile]{Datatypes are inductive}
+    \bigskip
+\begin{leancode}
+inductive List (α : Type)
+  | nil  : List α
+  | cons : α → List α → List α
+\end{leancode}
+
+\bigskip
+Finally, the recursion/induction principle
+\medskip
+
+\begin{leancode}
+List.rec : {α : Type} →
+    {C : List α → Sort _} →
+    C nil → 
+    ((hd : α) → (tl : List α) 
+        → C tl → C (cons hd tl)) → 
+    (t : List α) →
+    C t
+\end{leancode}
+
+\end{frame}
+    
+% --------------------------------------------------------------------
+
+
+\begin{frame}[fragile]{Codatatypes are coinductive}
+    \bigskip
+\begin{leancode}
+coinductive Stream (α : Type)
+  | cons (head : α) (tail: Stream α) 
+            : Stream α
+\end{leancode}
+
+     
+    \end{frame}
+    
+% --------------------------------------------------------------------
+
+
+\begin{frame}[fragile]{Codatatypes are coinductive}
+    \bigskip
+\begin{leancode}
+coinductive Stream (α : Type)
+  | cons (head : α) (tail: Stream α) 
+            : Stream α
+\end{leancode}
+
+\bigskip
+With its corecursor
+\medskip
+
+\begin{leancode}
+Stream.corec {α β} : 
+    (β → α × β) → β → Stream α 
+\end{leancode}
+
+Which satisfies
+\begin{leancode}
+head (Stream.corec f b) = fst (f b)
+tail (Stream.corec f b) 
+        = Stream.corec f (snd (f b))
+\end{leancode}
+
+     
+    \end{frame}
+    
+% --------------------------------------------------------------------
+
+\begin{frame}[fragile]{Lean has inductive}
+
+    \medskip
+    Lean already supports \lean{inductive}, but not \lean{coinductive} 
+    declarations, based on a different system than I will explain today.
+
+    \bigskip
+
+    My goal: implement \lean{data} and \lean{codata} declarations 
+    that compile down to QPF-constructions.
+    
+\end{frame}
+
+% --------------------------------------------------------------------
+
+\section*{QPFs}
+
+\begin{frame}{What's in a dataype}
+    A \lean{List α}, e.g., \lean{[1,2,3]} is a ``tree'':
+    \begin{center}
+        \Tree [.\lean{cons 1} [.\lean{cons 2} [.\lean{cons 3} \lean{nil} ] ]]
+    \end{center}
+
+    \bigskip
+    In general:
+
+    \begin{columns}
+        \begin{column}{0.49\linewidth}\centering
+            \Tree [.\lean{cons α} \lean{List α} ]    
+        \end{column}%
+        \begin{column}{0.49\linewidth}\centering
+            \lean{nil}
+        \end{column}
+    \end{columns}
+    
+\end{frame}
+
+\begin{frame}
+    \begin{definition}
+        A polynomial functor is a functor that is isomorphic to
+        \[
+            P(α) = \sum_{a ∈ A} B(a) → α
+        \]
+        For some set $A$ and $A$-indexed family of sets $B(a)_{a ∈ A}$
+    \end{definition}
+
+    \bigskip
+
+    An element of $P(α)$ is a (dependent) pair $⟨a, f⟩$ where $a ∈ A$ is the ``shape'' and 
+    $f : B(a) → α$ is the ``data''.
+
+    \bigskip
+   
+\end{frame}
+
+% \begin{frame}[fragile]
+%     \bigskip
+%     \begin{leancode}
+% structure PFunctor :=
+%     A : Type u
+%     B : A → Type u
+
+% /-- Applying `P` to an object of `Type` -/
+% def Obj (P : PFunctor) (α : Type u)
+%   := Σ x : P.A, P.B x → α
+
+% /-- Applying `P` to a morphism of `Type` -/
+% def map (P : PFunctor) (f : α → β) 
+%                 : P.Obj α → P.Obj β :=
+%   λ ⟨a, g⟩ => ⟨a, f ∘ g⟩
+%     \end{leancode}    
+% \end{frame}
+
+\begin{frame}
+    \begin{definition}
+        The $W$-type of a polynomial functor $P$ is its initial algebra
+    \end{definition}
+
+    \medskip
+
+    An element of $W_P$ is a (dependent) pair $⟨a, f⟩$ where $a ∈ A$ and $f : B(a) → W_P$
+
+    \bigskip
+
+    \only<2>{
+        For example, let $P_α$ be the polynomial functor defined by
+        \begin{align*}
+            A           &:= \{nil\} ∪ (\{cons\} × α) \\
+            B(nil)      &:= \emptyset \\
+            B(cons, n)  &:= {*}
+        \end{align*}
+        Then, the corresponding $W$-type models \lean{List α}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Beyond inductive}
+    A \lean{MultiSet α} is quotient of \lean{List α} (that identifies lists up-to permutation).
+
+    \bigskip
+
+    Just polynomial functors cannot encode \lean{FinSet α}, hence 
+    Quotients of Polynomial Functors.
+\end{frame}
+
+\begin{frame}[fragile]{Beyond inductive}
+    A \lean{MultiSet α} is quotient of \lean{List α} (that identifies lists up-to permutation).
+
+    \bigskip
+
+    Just polynomial functors cannot encode \lean{FinSet α}, hence 
+    Quotients of Polynomial Functors.
+
+    \bigskip
+
+    QPFs are closed under a bunch of constructions that allow us to arbitrarily nest inductive, 
+    coinductive and quotient types.
+
+    \bigskip
+
+    For example, the following defines infinite trees with unordered children.
+    \begin{leancode}
+codata InfTree (α : Type)
+  | α → MultiSet (InfTree α) → InfTree α
+    \end{leancode}
+\end{frame}
+
+
+
+\section*{Practicalities}
+
+\begin{frame}{My Project}
+    The theory of QPFs has been worked out, and the constructions formalized in lean 3, 
+    by Jeremy Avigad, Mario Carneiro and Simon Hudon.
+
+    \bigskip
+
+    But, users don't want to manually define their polynomial functor, 
+    they want to use nice \lean{inductive} syntax.
+
+    \bigskip
+
+    A big change from Lean 3 to Lean 4 is that Lean 4 is mostly written in Lean itself, 
+    so we can look at how Lean parses \lean{inductive} declarations, and reuse a lot of that code
+    to parse our new \lean{data} and \lean{codata} declarations.
+
+\end{frame}
+
+\begin{frame}{My Project}
+
+    \begin{itemize}
+        \alt<2->{\item[$\checkmark$]}{\item} Port existing work to Lean 4
+        \alt<3->{\item[$\checkmark$]}{\item} Implement a \lean{data} macro that can parse nice syntax
+        \item Generate the QPF
+        \item Generate auxiliary constructions (e.g., induction principle)
+        \alt<4->{\item[(?)]}{\item} Support nested datatypes, through composition
+        \alt<4->{\item[(?)]}{\item} Now do the same for \lean{codata}
+        \alt<4->{\item[(?)]}{\item} Quotients
+    \end{itemize}
+\end{frame}
+
+
+\end{document}
+
