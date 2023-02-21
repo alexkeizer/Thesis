@@ -44,6 +44,7 @@ class Lean4Lexer(RegexLexer):
         'constant', 'constants', 'print', 'opaque', 'reducible', 'irreducible',
         'def', 'macro', 'elab', 'syntax', 'macro_rules', 'reduce', 'where',
         'abbrev', 'noncomputable', 'class', 'attribute', 'synth', 'mutual',
+        'data', 'codata', 'deriving', 'qpf'
     )
 
     keywords2 = (
@@ -62,8 +63,9 @@ class Lean4Lexer(RegexLexer):
         u'-.', u'->', u'.', u'..', u'...', u'::', u':>', u';', u';;', u'<',
         u'<-', u'=', u'==', u'>', u'_', u'|', u'||', u'~', u'=>', u'<=', u'>=',
         u'/\\', u'\\/', u'∀', u'Π', u'λ', u'↔', u'∧', u'∨', u'≠', u'≤', u'≥',
-        u'¬', u'⁻¹', u'⬝', u'▸', u'→', u'∃', u'ℕ', u'ℤ', u'≈', u'×', u'⌞',
+        u'¬', u'⁻¹', u'⬝', u'⋅', u'▸', u'→', u'∃', u'ℕ', u'ℤ', u'≈', u'×', u'⌞',
         u'⌟', u'≡', u'⟨', u'⟩',
+        u'⊕', u'⟹',
     )
 
     punctuation = (u'(', u')', u':', u'{', u'}', u'[', u']', u'⦃', u'⦄',

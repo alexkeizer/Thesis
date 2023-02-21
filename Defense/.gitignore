@@ -8,3 +8,7 @@
 *.toc
 *.xdv
 *.pdf
+*.vrb
+*.pyg
+*.synctex.gz
+_minted-*/

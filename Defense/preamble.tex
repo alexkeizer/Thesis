@@ -1,0 +1,201 @@
+
+%
+%   PACKAGES   
+%
+
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{unicode-math}
+\usepackage{verbatim}   % for the comment environment
+\usepackage{cleveref}
+\usepackage{xcolor}
+\usepackage{framed}
+\usepackage{booktabs}
+% \usepackage{enumitem}
+
+\usepackage{tikz}
+\usepackage{tikz-cd}
+
+% 
+%   Minted
+% 
+
+\usepackage[outputdir=.]{minted}
+
+% instruct minted to use our local theorem.py
+\newmintinline[leanm]{lean4.py:Lean4Lexer -x}{fontsize=\small}
+\newminted[leancode]{lean4.py:Lean4Lexer -x}{fontsize=\small}
+
+% Lean code that does not typecheck/compile
+\newminted[badleancode]{lean4.py:Lean4Lexer -x}{%
+    fontsize=\small,%
+    frame=leftline,%
+    framesep=0mm,%
+    rulecolor=red%
+}
+
+% Disable the red boxed minted will put around "syntax errors" 
+\AtBeginEnvironment{minted}{%
+  \renewcommand{\fcolorbox}[4][]{#4}}
+
+
+
+
+%   
+%   Fonts & coloring
+% 
+
+\usepackage[utf8]{inputenc}
+\usepackage{newunicodechar}
+\usepackage{fontspec}
+
+
+
+% switch to a monospace font supporting more Unicode characters
+\setmonofont{JetBrains Mono NL Light}
+% \setmonofont{Droid Sans Mono}
+
+\newfontfamily{\freemono}{FreeMono}
+\newfontfamily{\droidmono}{Droid Sans Mono}
+\newfontfamily{\jbmono}{JetBrains Mono NL Light}
+
+
+% Colors
+\definecolor{keywordcolor}{HTML}{008000}
+\definecolor{operatorcolor}{HTML}{008000}
+
+% Unicode glyphs
+
+\newcommand\iflean[2]{%
+\ifx\leanmode\undefined%
+#2%
+\else%
+#1%
+\fi%
+}
+
+\newcommand\leanoperator[1]{%
+\ifx\leanmode\undefined%
+#1%
+\else%
+{\color{operatorcolor} #1}%
+\fi%
+}
+
+% TODO: make it so that these don't mess up monospacing in code environment
+\newcommand\leanmathoperator[1]{\ensuremath{\leanoperator{#1}}} 
+\newunicodechar{→}{\leanmathoperator{\rightarrow}}
+\newunicodechar{⟹}{\leanmathoperator{\Longrightarrow}}
+\newunicodechar{⋅}{\leanmathoperator{\cdot}}
+
+\newunicodechar{α}{{\droidmono α}}
+\newunicodechar{β}{{\droidmono β}}
+\newunicodechar{γ}{{\droidmono γ}}
+\newunicodechar{ρ}{{\droidmono ρ}}
+\newunicodechar{₁}{\ensuremath{_\text{1}}}
+\newunicodechar{₂}{\ensuremath{_\text{2}}}
+\newunicodechar{ᵢ}{\ensuremath{_\text{i}}}
+\newunicodechar{ⱼ}{\ensuremath{_\text{j}}}
+\newunicodechar{ₖ}{\ensuremath{_\text{k}}}
+\newunicodechar{ₙ}{\ensuremath{_\text{n}}}
+\newunicodechar{ₘ}{\ensuremath{_\text{m}}}
+\newunicodechar{₋}{\ensuremath{_\text{-}}}
+
+% 
+% \usepackage[GreekAndCoptic]{ucharclasses}
+% \setTransitions{GreekAndCoptic}{}{}
+
+
+% 
+%   Spacing & Layout
+% 
+
+\usepackage{geometry}
+
+% \geometry{
+%     hmargin=10em
+% }
+\frenchspacing
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+
+
+
+% 
+%   Custom environments
+% 
+\definecolor{shadecolor}{HTML}{F8E0E0}
+
+% definitions
+% \newenvironment{definition}[1][Definition:]{\begin{trivlist}                         
+%     \item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+    
+% remark    
+% \newenvironment{remark}{\begin{trivlist}                         
+%   \item[\hskip \labelsep {\bfseries Remark:}]}{\end{trivlist}}
+
+
+
+\newenvironment{remark}{%
+% \def\FrameCommand{\colorbox{remarkcolor}}%
+% \MakeFramed{\advance\hsize-\width \FrameRestore}%
+\begin{framed}
+\begin{trivlist}
+    \item[\hskip \labelsep {\bfseries Remark:}]}%
+{%
+\end{trivlist}%
+\end{framed}
+    % \endMakeFramed%
+}
+    
+
+% todo
+\newenvironment{todo}{%
+\definecolor{shadecolor}{HTML}{F8E0E0}%
+\begin{shaded}%
+\begin{trivlist}                         
+    \item[\hskip \labelsep {\bfseries Todo:}]}{\end{trivlist}\end{shaded}}
+
+% hidden code    
+\newenvironment{leanhidden}{\expandafter\comment}{\expandafter\endcomment}
+
+
+
+% Add a new list, whose references are called "step 1", "step 2", etc.
+% \newlist{stepenum}{enumerate}{10}
+% \setlist[stepenum,1]{label*=\arabic*., ref=(\arabic*)}
+% \setlist[stepenum,2]{label*=(\alph*)}
+
+% \crefname{stepenumi}{step}{stepenum}
+% \Crefname{stepenumi}{Step}{stepenum}
+
+
+% 
+%   Custom commands
+% 
+
+\newcommand\lean[1]{%
+\ifx\leanmode\undefined%
+\def\leanmode{1}%
+\texttt{\small #1}%
+\undef\leanmode%%
+\else%
+\texttt{#1}%
+\fi%
+}
+
+\newcommand\keyword[1]{{\color{keywordcolor} \textbf{\lean{#1}}}}
+
+\newcommand\inductive{{\keyword{inductive}}}
+\newcommand\data{\keyword{data}}
+\newcommand\codata{\keyword{codata}}
+\newcommand\qpf{\keyword{qpf}}
+\newcommand\ldef{\keyword{def}}
+
+\newcommand\Type{\leanm{Type}}
+\newcommand\Typen[1]{\leanm{Type #1}}
+
+
+\newcommand\etal{\emph{et al.}}
