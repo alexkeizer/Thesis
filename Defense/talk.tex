@@ -209,12 +209,6 @@ codata CoList (α : Type)
 
 \vfill
 
-\pause{}
-
-\begin{itemize}
-    \item \lean{CoList} represents potentially infinite lists!
-\end{itemize}
-
      
 \end{frame}
     
@@ -225,7 +219,7 @@ codata CoList (α : Type)
     \vfill
 \begin{leancode}
 codata CoTree (α : Type)
-  | cons : α → CoList (CoTree α) → CoTree α 
+  | node : α → CoList (CoTree α) → CoTree α 
 \end{leancode}
 
 \medskip
@@ -252,7 +246,7 @@ codata CoTree (α : Type)
     \vfill
 \begin{leancode}
 data CoTree2 (α : Type)
-  | cons : α → CoList (CoTree2 α) → CoTree2 α
+  | node : α → CoList (CoTree2 α) → CoTree2 α
 \end{leancode}
 
 \medskip
@@ -277,7 +271,7 @@ data CoTree2 (α : Type)
     \vfill
 \begin{leancode}
 codata CoTree3 (α : Type)
-  | cons : α → List (CoTree3 α) → CoTree3 α
+  | node : α → List (CoTree3 α) → CoTree3 α
 \end{leancode}
 
 \medskip
@@ -488,7 +482,7 @@ inductive Sum (α β : Type)
 
     \vfill
 
-    A polynomial functor $P$ is defined by,
+    A \textbf{binary} polynomial functor $P$ is defined by,
     \begin{itemize}
         \item a type $A$, and
         \item for each $a : A$, types \textbf{$\mathbf{B^0_{a}}$ and $\mathbf{B^1_a}$}
@@ -502,7 +496,7 @@ inductive Sum (α β : Type)
 
     \vfill
 
-    Elements of $P(X_0, X_1)$ are tuples $⟨a, f_0, f_1⟩$ where
+    Elements of $P(X_0, X_1)$ are \textbf{triples} $⟨a, f_0, f_1⟩$ where
     \begin{itemize}
         \item $a : A$ is a \emph{shape}, and
         \item $f_0 : B^0_a → X_0$ the \emph{contents} for $X_0$, and
@@ -873,11 +867,11 @@ codata CoTree (α : Type)
 
 
 
-\begin{frame}{Quotient of Polynomial Functor}
+\begin{frame}{Quotients of Polynomial Functors}
 
     \vfill
 
-    Constructions are done in terms of QPF.
+    Constructions are done in terms of QPFs.
 
     \vfill
 
