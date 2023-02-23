@@ -23,7 +23,7 @@ The \emph{principle of no confusion} states that different combinations of const
 \begin{center}
     \lean{rec : β → (α → β → β) → (List α → β)}
 \end{center}
-Where the function \lean{rec b f} maps \lean{List.nil} to the constant \lean{b}, and \lean{List.cons head tail} to \lean{f head (f tail)}. Since Lean is dependently typed, the actual recursion principle is slightly more involved, but the core idea is the same.
+Where the function \lean{rec b f} maps \lean{List.nil} to the constant \lean{b}, and \lean{List.cons head tail} to \lean{f head (rec f tail)}. Since Lean is dependently typed, the actual recursion principle is slightly more involved, but the core idea is the same.
 This principle also asserts that \lean{List.nil} and \lean{List.cons} are the only ways to obtain elements of type \lean{List}. This extra assertion is also sometimes presented separately as the \emph{principle of no junk}.
 
 

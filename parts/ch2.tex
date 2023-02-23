@@ -152,7 +152,7 @@ Not all functors, though, have initial algebras, or final coalgebras.
 
 
 \section{Polynomial functors}
-Of special interest are \emph{polynomial functors}, which, intuitively, can are created from just a few primitive operations (constants, sums, products, and exponentials).
+Of special interest are \emph{polynomial functors}, which, intuitively, are created from just a few primitive operations (constants, sums, products, and exponentials).
 More formally, we say that a polynomial functor is defined by a set $A$ and an $A$-indexed family of sets $B_a$ as
 \[
     P(X) = \Sigma_{a ∈ A} B_a \rightarrow X  
@@ -316,7 +316,7 @@ One could see, e.g., the product functor as one of two univariate functors, \lea
     | leaf : α → TreeOfProd α
 \end{leancode}
     Because \lean{BinaryTree α} is used as \emph{both} arguments to the product, this specification is only well-formed if the product functor is functorial in both arguments (simultaneously).
-    Thus, we generalize the definitions presented so for to \emph{multivariate} functors. 
+    Thus, we generalize the definitions presented so far to \emph{multivariate} functors. 
 
 
 It is difficult to reason about $n$-ary curried functions, where $n$ is arbitrary, so instead an \emph{uncurried} representation of multivariate, universe polymorphic, type functions is used.

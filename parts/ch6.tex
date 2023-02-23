@@ -183,7 +183,7 @@ that were made, and their trade-offs.
 
 \section{Elaborating inductive declarations}
 For the elaborator, too, we draw inspiration from how \inductive{} is implemented.
-Elaboration starts in the generic declaration elaborator, which checks what the kind of declaration it is given, and defers to \lean{elabInductive} (in case of an inductive declaration). The latter, in turn, calls \lean{inductiveSyntaxToView} to transform the \lean{Syntax} object into a \lean{InductiveView} and defers to \lean{elabInductiveViews}.
+Elaboration starts in the generic declaration elaborator, which checks what kind of declaration it is given, and defers to \lean{elabInductive} (in case of an inductive declaration). The latter, in turn, calls \lean{inductiveSyntaxToView} to transform the \lean{Syntax} object into a \lean{InductiveView} and defers to \lean{elabInductiveViews}.
 
 This \lean{InductiveView} is a thin wrapper around the syntax tree, allowing us to refer to the different parts of an inductive declaration by name, rather than offset, but crucially, still stores, e.g., constructor types as \lean{Syntax} objects.
 
@@ -307,7 +307,7 @@ Continuing, \lean{elabQpfComposition} is the entry point into the composition pi
 Nothing is added to the environment at this step.
 
 Depending on which command was called, \lean{mkType} will take either the fixpoint or cofixpoint of \lean{Base}, and
-add the result to the environment (step~\ref{enum:proc:fixpoint}). It will do so both first uncurried form, as \lean{F.Uncurried}, and
+add the result to the environment (step~\ref{enum:proc:fixpoint}). It will do so first in the uncurried form, as \lean{F.Uncurried}, and
 then define \lean{F} as \lean{@TypeFun.curried n F.Uncurried}, where \lean{F} is whatever identifier the
 user supplied and $n$ is the arity.
 Finally, \lean{mkConstructors} will derive the expected constructor functions (step~\ref{enum:proc:aux})
